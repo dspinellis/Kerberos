@@ -1,7 +1,7 @@
 #
 # Convert an alarm specification into C state machine
 #
-# $Id: alr2c.pl,v 1.3 2001/03/18 20:45:52 dds Exp $
+# $Id: alr2c.pl,v 1.4 2001/08/26 08:08:10 dds Exp $
 #
 
 $#ARGV == 0 || die;
@@ -94,6 +94,7 @@ $trans
 	$cbody .= "}\n\n";
 	} else {
 		print STDERR "$.: syntax error [$_]\n";
+		$err++;
 	}
 }
 
@@ -138,3 +139,5 @@ for $e (keys %events) {
 }
 print EV "\tNUM_EVLST\n};\n";
 close(EV);
+
+exit($err ? 1 : 0);
