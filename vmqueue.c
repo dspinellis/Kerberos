@@ -4,7 +4,7 @@
  *
  * (C) Copyright 2001 Diomidis Spinellis.  All rights reserved.
  *
- * $Id: vmqueue.c,v 1.1 2001/03/18 22:20:46 dds Exp $
+ * $Id: vmqueue.c,v 1.2 2001/04/26 19:12:21 dds Exp $
  *
  */
 
@@ -46,7 +46,7 @@ vmqueue(char *cmd)
 
 	for (s = strtok(cmdcopy, ";"); s; s = strtok(NULL, ";"))
 		fprintf(f, "vm shell -l ttyd1 -S /usr/bin/perl " SCRIPTDIR "/%s ||\n", s);
-	fprintf(f, "false\n");
+	fprintf(f, "true\n");
 	if (fclose(f) != 0) {
 		syslog(LOG_ERR, "close(%s): %m", tmpfname);
 		return (-1);
