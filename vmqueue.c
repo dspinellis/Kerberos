@@ -4,7 +4,7 @@
  *
  * (C) Copyright 2001 Diomidis Spinellis.  All rights reserved.
  *
- * $Id: vmqueue.c,v 1.3 2001/10/31 20:45:53 dds Exp $
+ * $Id: vmqueue.c,v 1.4 2001/11/22 15:00:54 dds Exp $
  *
  */
 
@@ -64,4 +64,17 @@ vmqueue(char *cmd)
 		syslog(LOG_ERR, "rename(%s, %s): %m", tmpfname, newfname);
 		return (-1);
 	}
+	return (0);
 }
+
+#ifdef CMD
+int
+main(int argc, char *argv[])
+{
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s command\n", argv[0]);
+		return (1);
+	}
+	return vmqueue(argv[1]);
+}
+#endif
