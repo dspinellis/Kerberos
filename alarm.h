@@ -1,7 +1,16 @@
 #define DELAYED	2
 #define ACTIVE	1
+
 #define ON	1
 #define OFF	0
+
+/* The small siren uses positive logic */
+#define SMALL_ON	ON
+#define SMALL_OFF	OFF
+
+/* The main siren uses negative logic */
+#define MAIN_ON		OFF
+#define MAIN_OFF	ON
 
 #define ALL 	NULL
 
