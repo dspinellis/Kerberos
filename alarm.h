@@ -7,3 +7,11 @@
 
 #define PHONE_MSG 1
 #define PHONE_CMD 2
+
+#define SENSORPATH	"/var/spool/alarm/sensor/"
+#define STATUSPATH	"/var/spool/alarm/status/"
+
+#define VOICEDIR	"/var/spool/voice"
+#define VMQDIR		VOICEDIR "/vmq"
+
+#define SCRIPTDIR	"/usr/home/dds/voice"
