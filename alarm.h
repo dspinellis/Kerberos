@@ -10,6 +10,7 @@
 
 #define SENSORPATH	"/var/spool/alarm/sensor/"
 #define STATUSPATH	"/var/spool/alarm/status/"
+#define DISABLEPATH	"/var/spool/alarm/disable/"
 
 #define VOICEDIR	"/var/spool/voice"
 #define VMQDIR		VOICEDIR "/vmq"
