@@ -1,7 +1,7 @@
 #
 # Convert an alarm specification into C state machine
 #
-# $Id: alr2c.pl,v 1.4 2001/08/26 08:08:10 dds Exp $
+# $Id: alr2c.pl,v 1.5 2001/08/26 09:05:08 dds Exp $
 #
 
 $#ARGV == 0 || die;
@@ -46,6 +46,7 @@ while (<IN>) {
 		$count = $1;
 		$command = $2;
 		$command =~ s/ClearCounter\((\w+)\)/state_count[ST_$1] = 0/;
+		$command =~ s/call\s+(\w+)/proc_ST_$1()/;
 		$count =~ s/\=/==/;
 		if ($count ne '') {
 			$cmd .= "\tif(state_count[$state] $count) $command;\n";
