@@ -1,7 +1,7 @@
 #
 # Convert an alarm specification into C state machine
 #
-# $Id: alr2c.pl,v 1.1 2001/01/27 11:03:31 dds Exp $
+# $Id: alr2c.pl,v 1.2 2001/01/28 00:27:07 dds Exp $
 #
 
 $#ARGV == 0 || die;
@@ -64,7 +64,7 @@ while (<IN>) {
 		}
 		if ($event ne '') {
 			$events{$event} = 1;
-			$x = "\tcase $event: state = $newstate; break;\n";
+			$x = "\tcase $event: state = $newstate; return;\n";
 			if ($indefault) {
 				$deftrans .= $x;
 			} else {
@@ -75,21 +75,23 @@ while (<IN>) {
 		}
 	} elsif (/\s*\;\s*$/) {
 		# End of state spec
+		next if ($indefault);
 		$cbody .= "
 static void
 proc_$state(void)
 {
 	state_count[$state]++;
-$cmd\n" unless($indefault);
-		if ($trans) {
+	syslog(LOG_DEBUG, \"state: $state (%d)\", state_count[$state]);
+$cmd\n";
+		if ($trans || $cmd eq '') {
 			$cbody .= "
-	switch(get_event()) {
+	for (;;) switch(get_event()) {
 $deftrans
 $trans
 	}
 ";
 		}
-	$cbody .= "}\n\n" unless($indefault);
+	$cbody .= "}\n\n";
 	} else {
 		print STDERR "$.: syntax error [$_]\n";
 	}
