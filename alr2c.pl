@@ -1,7 +1,7 @@
 #
 # Convert an alarm specification into C state machine
 #
-# $Id: alr2c.pl,v 1.2 2001/01/28 00:27:07 dds Exp $
+# $Id: alr2c.pl,v 1.3 2001/03/18 20:45:52 dds Exp $
 #
 
 $#ARGV == 0 || die;
@@ -22,7 +22,7 @@ print EV $prologue;
 
 while (<IN>) {
 	chop;
-	s/#.*//;
+	s/^#.*//;
 	next if (/^$/);
 	if (/^(\w+):$/) {
 		# State begin
