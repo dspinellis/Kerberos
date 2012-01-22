@@ -1,7 +1,7 @@
 #
 # Convert an alarm specification into a state transition diagram
 #
-# $Id: alr2dot.pl,v 1.1 2002/07/04 12:50:15 dds Exp $
+# $Id: alr2dot.pl,v 1.2 2012/01/22 17:10:16 dds Exp $
 #
 
 $#ARGV == 0 || die;
@@ -11,7 +11,7 @@ print "digraph state {
 	size=\"8,11.5\";
 	rotate=90;
 	node [height=0.3,fontname=\"Helvetica\",fontsize=8,shape=record,style=rounded];
-	_start [shape=circle,style=filled,label=\"START\",height=12,width=0.5,fixedsize=true];
+	_start [shape=circle,style=filled,label=\"START\",height=0.5,fixedsize=true];
 	edge [fontname=\"Helvetica\", fontsize=8];
 ";
 while (<IN>) {
