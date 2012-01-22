@@ -19,3 +19,9 @@ home.c: home.alr alr2c.pl
 
 clean:
 	rm -f $(OBJ) alarm evlst.h home.c
+
+home.dot: home.alr
+	perl alr2dot.pl $? >$@
+
+home.svg: home.dot
+	dot -Tsvg -o$@ $?
