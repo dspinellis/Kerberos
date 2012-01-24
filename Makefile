@@ -6,7 +6,7 @@ all: alarm cmd vmqueue
 alarm: $(OBJ)
 	$(CC) $(CFLAGS) -o alarm $(OBJ)
 
-alarm.o: cmd.h alarm.h
+alarm.o: cmd.h alarm.h evlst.h
 
 cmd: cmd.c cmd.h evlst.h
 	$(CC) $(CFLAGS) -o cmd cmd.c
