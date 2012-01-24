@@ -8,7 +8,7 @@ alarm: $(OBJ)
 
 alarm.o: cmd.h alarm.h
 
-cmd: cmd.c cmd.h
+cmd: cmd.c cmd.h evlst.h
 	$(CC) $(CFLAGS) -o cmd cmd.c
 
 vmqueue: vmqueue.c
