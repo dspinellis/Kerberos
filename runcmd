@@ -1,0 +1,4 @@
+#!/bin/sh
+# Allow cmd to be run from init via ttys(5)
+exec 0</dev/ttyv0 1>/dev/ttyv0 2>/dev/ttyv0 
+/usr/home/dds/alarm/cmd
