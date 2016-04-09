@@ -1,22 +1,35 @@
 /*
- * Home alarm interface program
- * Requires the pbio driver
+ * Kerberos interface program
+ * Requires wiringPi API
  *
- * (C) Copyright 2000, 2001 Diomidis Spinellis.  All rights reserved.
+ * Kerberos DSL-configurable alarm program
+ * Copyright (C) 2000-2017  Diomidis Spinellis - dds@aueb.gr
  *
- * $Id: alarm.c,v 1.16 2012/02/15 16:58:12 dds Exp $
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-#include "/sys/sys/pbioio.h"
 #include <fcntl.h>
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
 #include <syslog.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <stdlib.h>
+#include <wiringPi.h>
 
 #include "evlst.h"
 #include "alarm.h"
@@ -30,19 +43,15 @@ errexit(char *s)
 	exit(1);
 }
 
-enum e_port {
-	PA, PB, PCH, PCL
-};
-
 enum e_fun {
-	SENSE, OUTPUT
+	SENSOR, RELAY, SPARE
 };
 
 struct s_bit {
 	char *pcbname;		/* Name on the PCB */
-	enum e_port port;	/* I/O port offset on the card */
-	int bit;		/* Bit on the port */
-	enum e_fun fun;		/* SENSE / OUTPUT */
+	int physical;		/* Physical pin in Raspberry Pi 2 */
+	int wpi;		/* Wiring Pi number */
+	enum e_fun fun;		/* SENSOR / RELAY */
 	char *name;		/* Human-readable name */
 	int event;		/* Event to raise */
 	int val;		/* Virtualized bit value */
@@ -55,19 +64,6 @@ struct s_bit {
 };
 
 #define NUM_BIT (sizeof(bit) / sizeof(struct s_bit))
-
-struct s_port {
-	char *name;
-	int omode;
-	int fd;
-} port[] = {
-	{"/dev/pbio0a", O_RDONLY},
-	{"/dev/pbio0b", O_RDWR},
-	{"/dev/pbio0ch", O_RDONLY},
-	{"/dev/pbio0cl", O_RDONLY},
-};
-
-#define NUM_PORT (sizeof(port) / sizeof(struct s_port))
 
 void
 set_sensor_active(char *name, int val)
@@ -101,7 +97,7 @@ zero_sensors(void)
 }
 
 /*
- * Increment the count of all sensors that are on and active 
+ * Increment the count of all sensors that are on and active
  * Create a corresponding file in the sensor directory
  */
 void
@@ -111,7 +107,7 @@ increment_sensors(void)
 	char buff[1024];
 
 	for (i = 0; i < NUM_BIT; i++)
-		if (bit[i].fun == SENSE && bit[i].active && bit[i].val) {
+		if (bit[i].fun == SENSOR && bit[i].active && bit[i].val) {
 			bit[i].count++;
 			strcpy(buff, SENSORPATH);
 			strcat(buff, bit[i].name);
@@ -139,22 +135,13 @@ void
 set_bit(char *name, int val)
 {
 	int i;
-	unsigned char vo;
 
-	if (memcmp(name, "Led", 3) != 0)
-		syslog(LOG_INFO, "set %s %s", name, val ? "on" : "off");
+	syslog(LOG_INFO, "set %s %s", name, val ? "on" : "off");
 	for (i = 0; i < NUM_BIT; i++) {
-		if (bit[i].fun != OUTPUT)
+		if (bit[i].fun != RELAY)
 			continue;
 		if (strcmp(bit[i].name, name) == 0) {
-			if (read(port[bit[i].port].fd, &vo, 1) < 0)
-				errexit("read");
-			if (val)
-				vo |= bit[i].bit;
-			else
-				vo &= ~bit[i].bit;
-			if (write(port[bit[i].port].fd, &vo, 1) < 0)
-				errexit("write");
+			digitalWrite(bit[i].wpi, val);
 			return;
 		}
 	}
@@ -165,24 +152,11 @@ void
 setall(int val)
 {
 	int i;
-	unsigned char vo;
-	int oport;
 
-	oport = -1;
 	for (i = 0; i < NUM_BIT; i++) {
-		if (bit[i].fun != OUTPUT)
+		if (bit[i].fun != RELAY)
 			continue;
-		if (oport != bit[i].port) {
-			if (read(port[bit[i].port].fd, &vo, 1) < 0)
-				errexit("read");
-			oport = bit[i].port;
-		}
-		if (val)
-			vo |= bit[i].bit;
-		else
-			vo &= ~bit[i].bit;
-		if (write(port[bit[i].port].fd, &vo, 1) < 0)
-			errexit("write");
+		digitalWrite(bit[i].wpi, val);
 	}
 }
 
@@ -201,18 +175,6 @@ register_timer_event(int interval, int event)
 	time(&timer_start);
 }
 
-/*
- * The values of the red and green LEDs
- */
-static int led_green;
-static int led_red;
-
-void
-set_led(int green, int red)
-{
-	led_green = green;
-	led_red = red;
-}
 
 /* Concatenate the specified formatted string to the log buffer */
 #define logcatf(fmt, val) {\
@@ -229,7 +191,6 @@ get_event(void)
 {
 	int i;
 	unsigned char vi;
-	int iport;
 	static int ev_queue[NUM_BIT + 10];
 	static int ev_count = 0;
 	static int flash = 0;
@@ -238,10 +199,6 @@ get_event(void)
 	char *buffp;
 
 	for (;;) {
-		set_bit("Led1", led_red ? flash : 1);
-		set_bit("Led2", led_green ? flash : 1);
-		flash = !flash;
-
 		/* If there is a queued event, return it */
 		if (ev_count)
 			return (ev_queue[--ev_count]);
@@ -267,18 +224,12 @@ get_event(void)
 			}
 		}
 
-		/* Check ports for an active sensor and queue events */
-		iport = -1;
+		/* Check sensors for an active one and queue events */
 		buffp = buff;
 		for (i = 0; i < NUM_BIT; i++) {
-			if (bit[i].fun != SENSE)
+			if (bit[i].fun != SENSOR)
 				continue;
-			if (iport != bit[i].port) {
-				if (read(port[bit[i].port].fd, &vi, 1) < 0)
-					errexit("read");
-				iport = bit[i].port;
-			}
-			if (vi & bit[i].bit) {
+			if (digitalRead(bit[i].wpi)) {
 				if (bit[i].count > 3) {
 					logcatf(" %s (auto-disabled)", bit[i].name);
 					continue;
@@ -325,36 +276,120 @@ touch(char *s)
 		close(fd);
 }
 
-int
-main(int argc, char *argv[])
+/* Setup all I/O for the alarm */
+static void
+setup_io(void)
 {
 	int i;
-	int v;
-	int mode;
+
+	wiringPiSetup();
+	for (i = 0; i < NUM_BIT; i++)
+		switch (bit[i].fun) {
+		case SENSOR:
+			pinMode(bit[i].wpi, INPUT) ;
+			pullUpDnControl(bit[i].wpi, PUD_UP);
+			break;
+		case RELAY:
+			pinMode(bit[i].wpi, RELAY) ;
+			break;
+		case SPARE:
+			break;
+		default:
+			assert(0);
+		}
+}
+
+/* Run the alarm system as a daemon */
+static void
+alarm_daemon(void)
+{
 	FILE *f;
 
 	daemon(0, 0);
 	openlog("alarm", 0, LOG_LOCAL0);
 	syslog(LOG_INFO, "starting up: pid %d", getpid());
-	if ((f = fopen("/var/run/alarm.pid", "w")) == NULL)
-		syslog(LOG_ERR, "/var/run/alarm.pid: %m");
+	if ((f = fopen("/var/run/alarmd.pid", "w")) == NULL)
+		syslog(LOG_ERR, "/var/run/alarmd.pid: %m");
 	else {
 		fprintf(f, "%d\n", getpid());
 		fclose(f);
 	}
-	/* Open all ports */
-	v = 0;
-	for (i = 0; i < NUM_PORT; i++) {
-		if ((port[i].fd = open(port[i].name, O_RDWR)) < 0)
-			errexit(port[i].name);
-		if (write(port[i].fd, &v, 1) < 0)
-			errexit("write");
-		if (close(port[i].fd) < 0)
-			errexit("close");
-		if ((port[i].fd = open(port[i].name, port[i].omode)) < 0)
-			errexit(port[i].name);
+
+	setup_io();
+	state_process();
+}
+
+static void
+sensor_debug(void)
+{
+	int i;
+	time_t now;
+
+	setup_io();
+
+	for (;;) {
+		time(&now);
+		printf("\n%s\n", ctime(&now));
+		for (i = 0; i < NUM_BIT; i++) {
+			if (bit[i].fun != SENSOR)
+				continue;
+			printf("%s %10s: %d\n", bit[i].pcbname, bit[i].name,
+				digitalRead(bit[i].wpi));
+		}
+		sleep(1);
+	}
+}
+
+static void
+usage(const char *name)
+{
+	int i;
+
+	fprintf(stderr, "Usage: %s [-v | -s name | -r name]\n"
+			"\t-v\tShow sensor values\n"
+			"\t-s name\tSet specified alarm\n"
+			"\t-r name\tReset specified alarm\n"
+			"\n\nAlarm names:", name
+	);
+
+	for (i = 0; i < NUM_BIT; i++)
+		if (bit[i].fun == RELAY)
+			fprintf(stderr, " %s", bit[i].name);
+	putc('\n', stderr);
+
+	exit(EXIT_FAILURE);
+}
+
+int
+main(int argc, char *argv[])
+{
+	int opt;
+
+	/* Debug options */
+	opterr = 0;
+	while ((opt = getopt(argc, argv, ":s:r:v")) != -1) {
+		switch (opt) {
+		case 'v':
+			sensor_debug();
+			/* NOTREACHED */
+		case 's':
+			if (!optarg)
+				usage(argv[0]);
+			printf("Set %s to 1\n", optarg);
+			setup_io();
+			set_bit(optarg, 1);
+			exit(EXIT_SUCCESS);
+		case 'r':
+			if (!optarg)
+				usage(argv[0]);
+			printf("Set %s to 0\n", optarg);
+			setup_io();
+			set_bit(optarg, 0);
+			exit(EXIT_SUCCESS);
+		default: /* '?' */
+			usage(argv[0]);
+		}
 	}
 
-	setall(1);
-	state_process();
+	alarm_daemon();
 }

@@ -1,10 +1,11 @@
+LDOPT=-lwiringPi
 OBJ=home.o alarm.o vmqueue.o
 CFLAGS=-g
 
 all: alarm cmd vmqueue
 
 alarm: $(OBJ)
-	$(CC) $(CFLAGS) -o alarm $(OBJ)
+	$(CC) $(CFLAGS) -o alarm $(OBJ) $(LDOPT)
 
 alarm.o: cmd.h alarm.h evlst.h
 
@@ -14,7 +15,7 @@ cmd: cmd.c cmd.h evlst.h
 vmqueue: vmqueue.c
 	$(CC) $(CFLAGS) -DCMD -o vmqueue vmqueue.c
 
-home.c: home.alr alr2c.pl
+home.c evlst.h: home.alr alr2c.pl
 	perl alr2c.pl home.alr
 
 clean:

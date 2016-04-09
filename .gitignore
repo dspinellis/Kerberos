@@ -1,3 +1,7 @@
 evlst.h
 home.c
 home.dot
+*.o
+alarm
+cmd
+vmqueue
