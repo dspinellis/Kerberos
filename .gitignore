@@ -2,6 +2,6 @@ evlst.h
 home.c
 home.dot
 *.o
-alarm
-cmd
+alarmd
+alarm-cli
 vmqueue
