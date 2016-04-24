@@ -1,30 +1,27 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          skeleton
+# Provides:          alarm
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Example initscript
-# Description:       This file should be used to construct scripts to be
-#                    placed in /etc/init.d.
+# Short-Description: Home alarm system
+# Description:       This runs the home alarm system daemons
 ### END INIT INFO
 
-# Author: Foo Bar <foobar@baz.org>
+# Author: Diomidis Spinellis <dds@aueb.gr>
 #
-# Please remove the "Author" lines above and replace them
-# with your own name if you copy and modify this script.
 
 # Do NOT "set -e"
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Description of the service"
-NAME=daemonexecutablename
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS="--options args"
+DESC="Home alarm"
+NAME=alarmd
+DAEMON=/usr/local/sbin/$NAME
+DAEMON_ARGS=
 PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/$NAME
+SCRIPTNAME=/etc/init.d/alarm
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
