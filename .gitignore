@@ -3,5 +3,5 @@ home.c
 home.dot
 *.o
 alarmd
-alarm-cli
+alarm
 vmqueue

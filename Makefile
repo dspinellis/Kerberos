@@ -1,7 +1,7 @@
 LDOPT=-lwiringPi
 OBJ=home.o alarm.o vmqueue.o
 CFLAGS=-g
-EXECUTABLES=alarmd alarm-cli vmqueue
+EXECUTABLES=alarmd alarm vmqueue
 
 all: $(EXECUTABLES)
 
@@ -10,7 +10,7 @@ alarmd: $(OBJ)
 
 alarm.o: cmd.h alarm.h evlst.h
 
-alarm-cli: cmd.c cmd.h evlst.h
+alarm: cmd.c cmd.h evlst.h
 	$(CC) $(CFLAGS) -o $@ cmd.c
 
 vmqueue: vmqueue.c
@@ -23,7 +23,7 @@ clean:
 	rm -f $(OBJ) alarm evlst.h home.c
 
 install: $(EXECUTABLES)
-	install alarm-cli vmqueue alarmd /usr/local/sbin/
+	install alarm vmqueue alarmd /usr/local/sbin/
 	install initd.sh /etc/init.d/alarm
 
 home.dot: home.alr
