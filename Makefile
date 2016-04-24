@@ -23,8 +23,8 @@ clean:
 	rm -f $(OBJ) alarm evlst.h home.c
 
 install: $(EXECUTABLES)
-	install vmqueue alarmd /usr/local/sbin
-	install alarm-cli /usr/local/bin
+	install alarm-cli vmqueue alarmd /usr/local/sbin/
+	install initd.sh /etc/init.d/alarm
 
 home.dot: home.alr
 	perl alr2dot.pl $? >$@
