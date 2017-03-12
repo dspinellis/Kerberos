@@ -25,6 +25,7 @@ clean:
 install: $(EXECUTABLES)
 	install alarm vmqueue alarmd /usr/local/sbin/
 	install initd.sh /etc/init.d/alarm
+	systemctl daemon-reload
 
 home.dot: home.alr
 	perl alr2dot.pl $? >$@
