@@ -45,7 +45,7 @@ vmqueue(char *cmd)
 	strcpy(cmdcopy, cmd);
 
 	for (s = strtok(cmdcopy, ";"); s; s = strtok(NULL, ";"))
-		fprintf(f, "/usr/local/bin/vm shell -l ttyd1 -S /usr/bin/perl " SCRIPTDIR "/%s ||\n", s);
+		fprintf(f, "vm shell -l ttyUSB0 -S /usr/bin/perl " SCRIPTDIR "/%s ||\n", s);
 	fprintf(f, "true\n");
 	if (fclose(f) != 0) {
 		syslog(LOG_ERR, "close(%s): %m", tmpfname);
