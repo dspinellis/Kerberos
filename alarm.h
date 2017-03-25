@@ -29,4 +29,4 @@
 #define VOICEDIR	"/var/spool/voice"
 #define VMQDIR		VOICEDIR "/vmq"
 
-#define SCRIPTDIR	"/usr/home/dds/voice"
+#define SCRIPTDIR	"/usr/local/lib/voice"
