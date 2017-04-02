@@ -71,10 +71,17 @@ vmqueue(char *cmd)
 int
 main(int argc, char *argv[])
 {
+	int ret;
+
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s command\n", argv[0]);
 		return (1);
 	}
-	return vmqueue(argv[1]);
+	ret = vmqueue(argv[1]);
+	if (ret != 0) {
+		fprintf(stderr, "%s: failed. Check error log\n", argv[0]);
+		return 1;
+	} else
+		return 0;
 }
 #endif
