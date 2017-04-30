@@ -24,6 +24,7 @@ clean:
 
 install: $(EXECUTABLES)
 	install alarm vmqueue alarmd /usr/local/sbin/
+	install alarm-sms.sh /usr/local/sbin/alarm-sms
 	install initd.sh /etc/init.d/alarm
 	systemctl daemon-reload
 
