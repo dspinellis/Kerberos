@@ -2,12 +2,11 @@
  * Home alarm program
  * Voice-mail interface
  *
- * (C) Copyright 2001 Diomidis Spinellis.  All rights reserved.
- *
- * $Id: vmqueue.c,v 1.4 2001/11/22 15:00:54 dds Exp $
+ * (C) Copyright 2001-2017 Diomidis Spinellis.  All rights reserved.
  *
  */
 
+#include <ctype.h>
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
@@ -44,9 +43,11 @@ vmqueue(char *cmd)
 	}
 	strcpy(cmdcopy, cmd);
 
-	for (s = strtok(cmdcopy, ";"); s; s = strtok(NULL, ";"))
-		fprintf(f, "vm shell -v -x 1 -l ttyUSB0 -S /usr/bin/perl " SCRIPTDIR "/%s ||\n", s);
-	fprintf(f, "true\n");
+	for (s = strtok(cmdcopy, ";"); s; s = strtok(NULL, ";")) {
+		while (isspace(*s))
+			s++;
+		fprintf(f, "vm shell -v -x 1 -l ttyUSB0 -S /usr/bin/perl " SCRIPTDIR "/%s && exit 0\n", s);
+	}
 	if (fclose(f) != 0) {
 		syslog(LOG_ERR, "close(%s): %m", tmpfname);
 		return (-1);
