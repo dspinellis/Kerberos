@@ -28,5 +28,6 @@
 
 #define VOICEDIR	"/var/spool/voice"
 #define VMQDIR		VOICEDIR "/vmq"
+#define VMAMFILE	VOICEDIR "/state/am"
 
 #define SCRIPTDIR	"/usr/local/lib/voice"
