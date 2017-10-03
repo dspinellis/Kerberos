@@ -48,8 +48,6 @@ vmqueue(char *cmd)
 			s++;
 		fprintf(f, "vm shell -v -x 1 -l modem -S /usr/bin/perl " SCRIPTDIR "/%s && exit 0\n", s);
 	}
-	/* Ensure script is executed no more than once */
-	fprintf(f, "exit 0\n", s);
 	if (fclose(f) != 0) {
 		syslog(LOG_ERR, "close(%s): %m", tmpfname);
 		return (-1);
