@@ -20,7 +20,7 @@ home.c evlst.h: home.alr alr2c.pl
 	perl alr2c.pl home.alr
 
 clean:
-	rm -f $(OBJ) alarm evlst.h home.c
+	rm -f $(OBJ) alarm alarmd vmqueue evlst.h home.c
 
 install: $(EXECUTABLES)
 	install alarm vmqueue alarmd /usr/local/sbin/
