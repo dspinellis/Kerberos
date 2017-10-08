@@ -17,7 +17,9 @@
 #include "alarm.h"
 
 /*
- * Queue ;-separeted series of cmd for execution by vmd
+ * Queue ;-separated parts of cmd for execution by vmd
+ * The first part to succeed will successfully terminate all ;-reparated
+ * commands.
  * Return 0 if ok, -1 on error
  * All errors get logged via syslog(3)
  */
@@ -58,7 +60,7 @@ vmqueue(char *cmd)
 	}
 	time(&now);
 	t = localtime(&now);
-	sprintf(newfname, VMQDIR "/vm.%04d.%02d.%02d.%02d.%02d.%02d", 
+	sprintf(newfname, VMQDIR "/vm.%04d.%02d.%02d.%02d.%02d.%02d",
 		t->tm_year + 1900, t->tm_mon + 1,
 		t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 	if (rename(tmpfname, newfname) != 0) {
