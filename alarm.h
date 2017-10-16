@@ -31,3 +31,15 @@
 #define VMAMFILE	VOICEDIR "/state/am"
 
 #define SCRIPTDIR	"/usr/local/lib/voice"
+
+void set_sensor_active(char *name, int val);
+void zero_sensors(void);
+void increment_sensors(void);
+int user_disabled(int i);
+void set_bit(char *name, int val);
+void setall(int val);
+void register_timer_event(int interval, int event);
+int get_event(void);
+void touch(char *s);
+int vmqueue(char *cmd);
+void state_process(void);
