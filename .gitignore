@@ -1,4 +1,5 @@
 alarm-spec.h
+cmd-def.h
 evlst.h
 home.c
 home.dot
