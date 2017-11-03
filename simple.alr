@@ -1,0 +1,97 @@
+#
+# Simple alarm control file
+#
+
+%{
+#include <stdlib.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "evlst.h"
+#include "alarm.h"
+
+%}
+
+%i disarm
+
+*:
+	CmdDayArm > day_arm
+	CmdLeave > leave
+	CmdDisarm > disarm
+	CmdQuit > exit
+	;
+
+exit:
+	| set_bit("Siren", MAIN_OFF)
+	| closelog()
+	| exit(0)
+	;
+
+disarm:
+	| syslog(LOG_INFO, "Disarmed")
+	| set_bit("Siren", MAIN_OFF)
+	| unlink(STATUSPATH "dayarm")
+	| touch(STATUSPATH "disarm")
+	| set_sensor_active(ALL, OFF)
+	| zero_sensors()
+	> living
+	;
+
+leave:
+	| set_sensor_active(ALL, OFF)
+	| set_sensor_active("Door2", ACTIVE)
+	> wait_for_door_open
+	;
+
+wait_for_door_open:
+	| syslog(LOG_INFO, "Waiting for door open")
+	ActiveSensor > door_open
+	;
+
+door_open:
+	| syslog(LOG_INFO, "Opening outside door")
+	| system("vm shell -v -x 1 -l modem -S /usr/bin/perl " SCRIPTDIR "/call.pl 32")
+	300s > day_arm
+	;
+
+arm_init:
+	| zero_sensors()
+	| set_sensor_active(ALL, ACTIVE)
+	| ClearCounter(day_alarm)
+	| unlink(STATUSPATH "dayarm")
+	| unlink(STATUSPATH "disarm")
+	;
+
+day_arm:
+	| call arm_init
+	| set_sensor_active("Door", DELAYED)
+	| touch(STATUSPATH "dayarm")
+	> day_armed
+	;
+
+day_armed:
+	| syslog(LOG_INFO, "Day armed")
+	DelayedSensor > check_entry
+	ActiveSensor > day_alarm
+	;
+
+check_entry:
+	5s > day_alarm
+	;
+
+day_alarm:
+	| syslog(LOG_INFO, "Day alarm")
+	| increment_sensors()
+	| set_bit("Siren", MAIN_ON)
+	300s > day_rearm
+	;
+
+day_rearm:
+	| syslog(LOG_INFO, "Day rearm")
+	| set_bit("Siren", MAIN_OFF)
+	|=1 sleep(90)
+	> day_armed
+	;
+
+living:
+	;
