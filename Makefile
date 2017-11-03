@@ -26,10 +26,11 @@
 
 # Configuration starts here
 # Specify here the alarm specification
-# This comprises:
-# a $SPEC.alr file with the state transition rules and the
-# a $SPEC.h file with the port mappings
-SPEC=home
+# This comprises the following files.
+# - $SPEC.alr the state transition rules and the
+# - $SPEC-io.h the port mappings
+# - $SPEC-cmd.h the supported commands
+SPEC=simple
 # Configuration starts here
 
 LDOPT=-lwiringPi
