@@ -1,3 +1,7 @@
+/*
+ * Common definitions for all alarm modules
+ */
+
 #define DELAYED	2
 #define ACTIVE	1
 

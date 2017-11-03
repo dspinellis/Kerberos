@@ -1,8 +1,6 @@
 #
 # Convert an alarm specification into C state machine
 #
-# $Id: alr2c.pl,v 1.5 2001/08/26 09:05:08 dds Exp $
-#
 
 $#ARGV == 0 || die;
 open(IN, $fname = $ARGV[0]) || die "Unable to read from $fname: $!\n";

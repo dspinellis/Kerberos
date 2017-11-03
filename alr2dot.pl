@@ -1,8 +1,6 @@
 #
 # Convert an alarm specification into a state transition diagram
 #
-# $Id: alr2dot.pl,v 1.2 2012/01/22 17:10:16 dds Exp $
-#
 
 $#ARGV == 0 || die;
 open(IN, $fname = $ARGV[0]) || die "Unable to read from $fname: $!\n";
