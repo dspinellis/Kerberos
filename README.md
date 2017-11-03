@@ -91,7 +91,7 @@ EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.**
 
 ## Building and Deployment
-* Download, build, and install the WiringPi API.
+* Download, build, and install the [WiringPi](http://wiringpi.com/) API.
 * Build the system by running `make`.
 * Install the generated alarm daemon and command-line interface by running
   `sudo make install`.
