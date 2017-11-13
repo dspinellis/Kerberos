@@ -1,7 +1,8 @@
-# Kerberos DSL-Configurable Alarm System
-
-Kerberos is a highly-flexible alarm system configurable through a
-domain-specific language and arbitrary C functions.
+# Kerberos DSL-Configurable Burglar Alarm System
+ 
+Kerberos is a highly-flexible burglar alarm system for the *Raspberry Pi*.
+It is configurable through a domain-specific language
+and arbitrary C functions.
 It was originally designed and implemented to run under FreeBSD using
 the *pbio*(4) 8255 parallel peripheral interface basic I/O driver,
 with an interface such as the Advantech PCL-724 Digital I/O Card.
