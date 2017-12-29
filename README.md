@@ -174,3 +174,7 @@ You monitor Kerberos's operation through the configured log files,
 e.g. with `tail -F /var/log/radar.log`.
 You will most probably want to setup a more user-friendly
 interface based on these two facilities.
+
+# See Also
+* Diomidis Spinellis. [The information furnace: Consolidated home control](http://www.dmst.aueb.gr/dds/pubs/jrnl/2003-PUC-ifurnace/html/furnace.html). Personal and Ubiquitous Computing, 7(1):53–69, 2003. [doi:10.1007/s00779-002-0213-8](http://dx.doi.org/10.1007/s00779-002-0213-8)
+* [ZoneMinder](http://www.zoneminder.com/)
