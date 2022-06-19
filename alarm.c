@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdlib.h>
-#include <wiringPi.h>
+#include <pigpio.h>
 
 #include "evlst.h"
 #include "alarm.h"
@@ -50,7 +50,7 @@ enum e_fun {
 struct s_bit {
 	char *pcbname;		/* Name on the PCB */
 	int physical;		/* Physical pin in Raspberry Pi 2 */
-	int wpi;		/* Wiring Pi number */
+	int bcm;		/* BCM pin number number */
 	enum e_fun fun;		/* SENSOR / RELAY */
 	char *name;		/* Human-readable name */
 	int event;		/* Event to raise */
@@ -141,7 +141,7 @@ set_bit(char *name, int val)
 		if (bit[i].fun != RELAY)
 			continue;
 		if (strcmp(bit[i].name, name) == 0) {
-			digitalWrite(bit[i].wpi, val);
+			gpioWrite(bit[i].bcm, val);
 			return;
 		}
 	}
@@ -156,7 +156,7 @@ setall(int val)
 	for (i = 0; i < NUM_BIT; i++) {
 		if (bit[i].fun != RELAY)
 			continue;
-		digitalWrite(bit[i].wpi, val);
+		gpioWrite(bit[i].bcm, val);
 	}
 }
 
@@ -229,7 +229,7 @@ get_event(void)
 		for (i = 0; i < NUM_BIT; i++) {
 			if (bit[i].fun != SENSOR)
 				continue;
-			if (digitalRead(bit[i].wpi)) {
+			if (gpioRead(bit[i].bcm)) {
 				if (bit[i].count > 3) {
 					logcatf(" %s (auto-disabled)", bit[i].name);
 					continue;
@@ -282,15 +282,19 @@ setup_io(void)
 {
 	int i;
 
-	wiringPiSetup();
+	if (gpioInitialise() < 0) {
+		fprintf(stderr, "Error in gpioInitialise\n");
+		exit(EXIT_FAILURE);
+	}
+
 	for (i = 0; i < NUM_BIT; i++)
 		switch (bit[i].fun) {
 		case SENSOR:
-			pinMode(bit[i].wpi, INPUT) ;
-			pullUpDnControl(bit[i].wpi, PUD_UP);
+			gpioSetMode(bit[i].bcm, PI_INPUT) ;
+			gpioSetPullUpDown(bit[i].bcm, PI_PUD_UP);
 			break;
 		case RELAY:
-			pinMode(bit[i].wpi, RELAY) ;
+			gpioSetMode(bit[i].bcm, PI_OUTPUT) ;
 			break;
 		case SPARE:
 			break;
@@ -334,7 +338,7 @@ sensor_debug(void)
 			if (bit[i].fun != SENSOR)
 				continue;
 			printf("%s %10s: %d\n", bit[i].pcbname, bit[i].name,
-				digitalRead(bit[i].wpi));
+				gpioRead(bit[i].bcm));
 		}
 		sleep(1);
 	}

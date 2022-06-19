@@ -33,9 +33,9 @@
 SPEC=simple
 # Configuration starts here
 
-LDOPT=-lwiringPi
+LDOPT=-lpigpio -lrt
 OBJ=$(SPEC).o alarm.o vmqueue.o
-CFLAGS=-g
+CFLAGS=-g -pthread
 EXECUTABLES=alarmd alarm vmqueue
 
 .SUFFIXES:.dot .svg .alr
