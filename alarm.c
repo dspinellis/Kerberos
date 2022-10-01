@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <pigpio.h>
 
@@ -52,6 +53,7 @@ struct s_bit {
 	int physical;		/* Physical pin in Raspberry Pi 2 */
 	int bcm;		/* BCM pin number number */
 	enum e_fun fun;		/* SENSOR / RELAY */
+	bool log_when_disabled;	/* True to log triggers when disabled */
 	char *name;		/* Human-readable name */
 	int event;		/* Event to raise */
 	int val;		/* Virtualized bit value */
@@ -234,7 +236,8 @@ get_event(void)
 					logcatf(" %s (auto-disabled)", bit[i].name);
 					continue;
 				} else if (!bit[i].active) {
-					logcatf(" %s (disabled)", bit[i].name);
+					if (bit[i].log_when_disabled)
+						logcatf(" %s (disabled)", bit[i].name);
 					continue;
 				} else if (user_disabled(i)) {
 					logcatf(" %s (user-disabled)", bit[i].name);
