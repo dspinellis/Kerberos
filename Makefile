@@ -55,10 +55,14 @@ alarm.o: cmd.h cmd-def.h alarm.h evlst.h alarm-spec.h
 	$(CC) -c $(CFLAGS) -o $@ alarm.c
 
 alarm-spec.h: $(SPEC)-io.h
+	rm -f $@
 	cp $? $@
+	chmod 400 $@
 
 cmd-def.h: $(SPEC)-cmd.h
+	rm -f $@
 	cp $? $@
+	chmod 400 $@
 
 alarm: cmd.c cmd.h cmd-def.h evlst.h
 	$(CC) $(CFLAGS) -o $@ cmd.c
@@ -67,7 +71,9 @@ vmqueue: vmqueue.c
 	$(CC) $(CFLAGS) -DCMD -o $@ vmqueue.c
 
 $(SPEC).c evlst.h: $(SPEC).alr alr2c.pl
+	rm -f $(SPEC).c
 	perl alr2c.pl $(SPEC).alr
+	chmod 400 $(SPEC).c
 
 clean:
 	rm -f $(OBJ) alarm alarmd vmqueue evlst.h $(SPEC).c
