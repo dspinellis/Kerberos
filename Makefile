@@ -51,7 +51,7 @@ all: $(EXECUTABLES)
 alarmd: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LDOPT)
 
-alarm.o: cmd.h cmd-def.h alarm.h evlst.h alarm-spec.h
+alarm.o: cmd.h cmd-def.h alarm.h evlst.h alarm-spec.h alarm.c
 	$(CC) -c $(CFLAGS) -o $@ alarm.c
 
 alarm-spec.h: $(SPEC)-io.h
