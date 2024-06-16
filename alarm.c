@@ -3,7 +3,7 @@
  * Requires wiringPi API
  *
  * Kerberos DSL-configurable alarm program
- * Copyright (C) 2000-2017  Diomidis Spinellis - dds@aueb.gr
+ * Copyright (C) 2000-2024  Diomidis Spinellis - dds@aueb.gr
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,8 @@ struct s_bit {
 	int event;		/* Event to raise */
 	int val;		/* Virtualized bit value */
 	int active;		/* For sensors, set to true when they have to
-				 * generate events (ACTIVE, DELAYED) */
+				 * generate events:
+				 * (ACTIVE, DELAYED, PERIMETER) */
 	int count;		/* Number of times the sensor has raised an
 				 * alarm */
 } bit[] = {
@@ -250,6 +251,9 @@ get_event(void)
 					break;
 				case DELAYED:
 					ev_queue[ev_count++] = EV_DelayedSensor;
+					break;
+				case PERIMETER:
+					ev_queue[ev_count++] = EV_PerimeterSensor;
 					break;
 				default:
 					assert(0);

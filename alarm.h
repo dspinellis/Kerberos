@@ -2,7 +2,7 @@
  * Common definitions for all alarm modules
  *
  * Kerberos DSL-configurable alarm program
- * Copyright (C) 2000-2017  Diomidis Spinellis - dds@aueb.gr
+ * Copyright (C) 2000-2024  Diomidis Spinellis - dds@aueb.gr
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
  *
  */
 
-#define DELAYED	2
-#define ACTIVE	1
+#define ACTIVE		1
+#define DELAYED		2
+#define PERIMETER	3
 
 /* The alarm board uses positive logic */
 #define ON	1
