@@ -2,16 +2,33 @@
 # Simple alarm control file
 #
 
-%{
-#include <stdlib.h>
-#include <syslog.h>
-#include <unistd.h>
 
-#include "evlst.h"
-#include "alarm.h"
+# Alarm hardware
+# Type	PCB     Phys    BCM     Log     Name
+SENSOR	S01	27	0	0	SpareSensor1
+SENSOR	S02	26	7	1	Entrance
+SENSOR	S03	32	12	0	SpareSensor3
+SENSOR	S04	28	31	0	SpareSensor4
+SENSOR	S05	36	16	0	SpareSensor5
+SENSOR	S06	37	26	0	SpareSensor6
+SPARE	S07	40	21	0	SpareSensor7
+SPARE	S08	38	20	0	SpareSensor8
+SPARE	S09	11	17	0	SpareSensor9
+SENSOR	S10	7	4	0	SpareSensor10
+SENSOR	S11	13	27	1	Entrance
+SENSOR	S12	12	18	0	SpareSensor11
+SENSOR	S13	16	23	0	SpareSensor12
+SENSOR	S14	15	22	0	SpareSensor13
+SENSOR	S15	22	25	0	SpareSensor14
+SENSOR	S16	18	24	1	Kitchen
+RELAY	A1	29	5	0	Siren
+RELAY	A2	31	6	0	SpareActuator1
+RELAY	A3	33	13	0	SpareActuator2
+RELAY	A4	35	19	0	SpareActuator3
 
-%}
+# Alarm states and transition rules
 
+# Initial state
 %i disarm
 
 *:
