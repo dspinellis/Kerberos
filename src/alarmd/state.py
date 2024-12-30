@@ -9,7 +9,7 @@ from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
 
 from . import debug
 from . import event_queue
-from .port import (increment_sensors, ports, set_bit, set_sensor_active,
+from .port import (increment_sensors, ports, set_bit, set_sensor_event,
                    zero_sensors)
 
 

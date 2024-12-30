@@ -49,14 +49,14 @@ disarm:
 	| set_bit("Siren", MAIN_OFF)
 	| unlink(STATUSPATH "dayarm")
 	| touch(STATUSPATH "disarm")
-	| set_sensor_active(ALL, None)
+	| set_sensor_event(ALL, None)
 	| zero_sensors()
 	> living
 	;
 
 leave:
-	| set_sensor_active(ALL, None)
-	| set_sensor_active("Door2", "ACTIVE")
+	| set_sensor_event(ALL, None)
+	| set_sensor_event("Door2", "ActiveSensor")
 	> wait_for_door_open
 	;
 
@@ -73,7 +73,7 @@ door_open:
 
 arm_init:
 	| zero_sensors()
-	| set_sensor_active(ALL, "ACTIVE")
+	| set_sensor_event(ALL, "ActiveSensor")
 	| ClearCounter(day_alarm)
 	| unlink(STATUSPATH "dayarm")
 	| unlink(STATUSPATH "disarm")
@@ -81,7 +81,7 @@ arm_init:
 
 day_arm:
 	| call arm_init
-	| set_sensor_active("Door", "DELAYED")
+	| set_sensor_event("Door", "DelayedSensor")
 	| touch(STATUSPATH "dayarm")
 	> day_armed
 	;

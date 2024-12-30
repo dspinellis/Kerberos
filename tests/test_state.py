@@ -266,34 +266,34 @@ initial:
         initial_name = read_config(mock_file)
         event_processor(initial_name)
 
-def test_set_sensor_active():
+def test_set_sensor_event():
     # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
-    | set_sensor_active("Bedroom", "ACTIVE")
+    | set_sensor_event("Bedroom", "ACTIVE")
     > DONE
     ;
 
 clear:
-    | set_sensor_active("Bedroom", None)
+    | set_sensor_event("Bedroom", None)
     > DONE
     ;
     """)
     with patch('RPi.GPIO.setup') as mock_setup, \
             patch('RPi.GPIO.add_event_detect') as mock_add_event_detect:
         initial_name = read_config(mock_file)
-        assert not port.get_instance('Bedroom').is_active()
+        assert not port.get_instance('Bedroom').is_event_generating()
         event_processor(initial_name)
-        assert port.get_instance('Bedroom').is_active()
+        assert port.get_instance('Bedroom').is_event_generating()
         event_processor('clear')
-        assert not port.get_instance('Bedroom').is_active()
+        assert not port.get_instance('Bedroom').is_event_generating()
 
 
 def test_increment_sensors():
     # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
-    | set_sensor_active("Bedroom", "ACTIVE")
+    | set_sensor_event("Bedroom", "ACTIVE")
     | increment_sensors()
     > DONE
     ;
@@ -309,7 +309,7 @@ zero:
         initial_name = read_config(mock_file)
         assert port.get_instance('Bedroom').get_count() == 0
         event_processor(initial_name)
-        assert port.get_instance('Bedroom').is_active()
+        assert port.get_instance('Bedroom').is_event_generating()
         assert port.get_instance('Bedroom').get_count() == 1
         assert port.get_instance('Window').get_count() == 0
         mock_input.assert_called_once_with(81)

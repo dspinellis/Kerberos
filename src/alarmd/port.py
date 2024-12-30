@@ -56,8 +56,8 @@ class Port:
         self.bcm = int(bcm)
         self.log = bool(int(log))
 
-        # A value of ACTIVE, DELAYED, PERIMETER for sensors that generate events
-        self.active = None
+        # The name of the events to generate, or None
+        self.event_name = None
 
         # Number of times the sensor has raised an alarm
         # Incremented on alarms and auto-disabled when it reaches
@@ -82,15 +82,15 @@ class Port:
         debug.log(self)
 
 
-    def is_active(self):
-        """Return true if the port is active.
+    def is_event_generating(self):
+        """Return true if the port is set to generate events.
         Args:
             None
 
         Returns:
-            bool: True if the port is active.
+            bool: True if the port is is set to generate events.
         """
-        return bool(self.active)
+        return bool(self.event_name)
 
 
 
@@ -155,29 +155,29 @@ class Port:
         GPIO.output(self.bcm, value)
 
 
-    def set_active(self, value):
-        """Set the sensor port to the specified active value.
+    def set_event_name(self, value):
+        """Set the sensor port to the specified event name value.
         Args:
-            value (str|None): The value to set the port active field.
+            value (str|None): The value to set the port's generated events.
 
         Returns:
             None
         """
         if not self.is_sensor():
-            raise ValueError(f"Illegal active setting to non-sensor port {self.name}")
-        self.active = value
+            raise ValueError(f"Non-sensor port {self.name} does not generate events")
+        self.event_name = value
 
 
-    def get_active(self):
-        """Return the sensor port's active value.
+    def get_event_name(self):
+        """Return the sensor port's event name value.
         Args:
 
         Returns:
-            str|None: The value of the port's active field.
+            str|None: The name of the port's generated event.
         """
         if not self.is_sensor():
-            raise ValueError(f"Illegal active setting to non-sensor port {self.name}")
-        return self.active
+            raise ValueError(f"Non-sensor port {self.name} does not generate events")
+        return self.event_name
 
 
     def clear_count(self):
@@ -246,18 +246,18 @@ def set_bit(name, value):
     get_instance(name).set_bit(value)
 
 
-def set_sensor_active(name, value):
+def set_sensor_event(name, value):
     """
-    Set the active value of the port with the specified name.
+    Set the event name value of the sensor port with the specified name.
 
     Args:
         name (str): The identifier for the port's alarm purpose.
-        active (str|None): The value to set the port active value.
+        value (str|None): The value to set the port event value.
 
     Returns:
         None
     """
-    get_instance(name).set_active(value)
+    get_instance(name).set_event_name(value)
 
 
 def zero_sensors():
@@ -273,14 +273,15 @@ def zero_sensors():
 
 
 def increment_sensors():
-    """Increment the count and mark files for all active and sensing sensors."""
+    """Increment the count and mark files for all event-generating
+    and activity sensing sensors."""
     debug.log('Incrementing sensors')
     for port in ports:
         if not port.is_sensor():
             debug.log(f"{port} is not sensor")
             continue
-        if not port.is_active():
-            debug.log(f"{port} is not active")
+        if not port.is_event_generating():
+            debug.log(f"{port} is not generating events")
             continue
         if not GPIO.input(port.get_bcm()):
             debug.log(f"{port} is not firing")
