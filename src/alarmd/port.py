@@ -26,8 +26,9 @@ def gpio_event_handler(channel):
         None
     """
     port = ports_by_bcm[channel]
-
-    print(f"Interrupt detected on pin {channel}")
+    name = port.get_event_name()
+    debug.log(f"Queuing sensor event {name}")
+    event_queue.put(name)
 
 
 class Port:

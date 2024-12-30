@@ -12,6 +12,8 @@ from . import event_queue
 from .port import (increment_sensors, ports, set_bit, set_sensor_event,
                    zero_sensors)
 
+# For testing
+from .port import gpio_event_handler
 
 # All states
 states_by_name = dict()

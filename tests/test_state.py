@@ -270,7 +270,7 @@ def test_set_sensor_event():
     # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
-    | set_sensor_event("Bedroom", "ACTIVE")
+    | set_sensor_event("Bedroom", "ActiveSensor")
     > DONE
     ;
 
@@ -293,7 +293,7 @@ def test_increment_sensors():
     # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
-    | set_sensor_event("Bedroom", "ACTIVE")
+    | set_sensor_event("Bedroom", "ActiveSensor")
     | increment_sensors()
     > DONE
     ;
@@ -310,8 +310,41 @@ zero:
         assert port.get_instance('Bedroom').get_count() == 0
         event_processor(initial_name)
         assert port.get_instance('Bedroom').is_event_generating()
+        assert port.get_instance('Bedroom').get_event_name() == 'ActiveSensor'
         assert port.get_instance('Bedroom').get_count() == 1
         assert port.get_instance('Window').get_count() == 0
         mock_input.assert_called_once_with(81)
         event_processor('zero')
         assert port.get_instance('Bedroom').get_count() == 0
+
+
+def test_trigger_sensor_event():
+    # Test the existence of the external API functions
+    mock_file = StringIO(SENSOR_SETUP + SETUP + """
+initial:
+    | set_sensor_event("Bedroom", "ActiveSensor")
+# This should queue an ActiveSensor event
+    | gpio_event_handler(81)
+    > armed
+    ;
+
+armed:
+    ActiveSensor > alarm
+    done > DONE
+    ;
+
+alarm:
+    | increment_sensors()
+    > DONE
+    ;
+    """)
+    with patch('RPi.GPIO.setup') as mock_setup, \
+            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
+            patch('RPi.GPIO.input', return_value=True) as mock_input:
+        initial_name = read_config(mock_file)
+        assert port.get_instance('Bedroom').get_count() == 0
+
+        event_processor(initial_name)
+
+        assert port.get_instance('Bedroom').get_event_name() == 'ActiveSensor'
+        assert port.get_instance('Bedroom').get_count() == 1
