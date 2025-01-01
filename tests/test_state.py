@@ -14,6 +14,8 @@ from os import system
 from time import sleep
 from sys import exit
 from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
+from alarmd.port import increment_sensors, zero_sensors
+from alarmd.port import set_bit, set_sensor_event
 
 #Type	    PCB	PhysBCM	Log	Name
 RELAY	    A1	29	5	1	Siren5
