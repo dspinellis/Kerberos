@@ -3,7 +3,7 @@ import re
 import RPi.GPIO as GPIO
 import sys
 
-from .port import Port
+from .port import SensorPort, RelayPort
 
 from .state import State, all_states
 from . import state
@@ -65,9 +65,13 @@ def read_config(input_file):
         if not line:
             continue
 
-        if re.match(r'^(SENSOR|RELAY)', line):
+        if re.match(r'^SENSOR', line):
             io_type, pcb, physical, bcm, log, name = line.split()
-            port = Port(name, io_type, pcb, physical, bcm, log)
+            port = SensorPort(name, pcb, physical, bcm, log)
+
+        elif re.match(r'^RELAY', line):
+            io_type, pcb, physical, bcm, log, name = line.split()
+            port = RelayPort(name, pcb, physical, bcm, log)
 
         elif match := re.match(r"from\s+(\S+)\s+import\s+(.+)", line):
             # "from name import c1, c2": Import components to use

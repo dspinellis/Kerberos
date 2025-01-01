@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import os
 import RPi.GPIO as GPIO
 import sys
@@ -31,15 +32,16 @@ def gpio_event_handler(channel):
     event_queue.put(name)
 
 
-class Port:
-    """Details about an alarm system I/O port"""
-    def __init__(self, name, io_type, pcb, physical, bcm, log):
+class Port(ABC):
+    """An alarm system I/O port abstract base class.
+    This is used as a base class to document and specify the methods
+    of the sensor and relay port subclasses."""
+    def __init__(self, name, pcb, physical, bcm, log):
         """
         Initialize a new I/O port instance.
 
         Args:
             name (str): The identifier for the port's alarm purpose.
-            io_type (str): The type of input/output: SENSOR or RELAY.
             pcb (str): The mark on the printed circuit board.
             physical (int): The physical pin number associated with the port.
             bcm (int): The BCM (Broadcom) GPIO pin number.
@@ -51,32 +53,10 @@ class Port:
 
         self.name = name
 
-        self.io_type = io_type
         self.pcb = pcb
         self.physical = int(physical)
         self.bcm = int(bcm)
-        self.log = bool(int(log))
 
-        # The name of the events to generate, or None
-        self.event_name = None
-
-        # Number of times the sensor has raised an alarm
-        # Incremented on alarms and auto-disabled when it reaches
-        # AUTO_DISABLE_COUNT
-        self.count = 0
-
-        # True to log triggers when disabled
-        self.log_when_disabled = False
-
-        # Setup the hardware
-        if io_type == 'SENSOR':
-            GPIO.setup(self.bcm, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.bcm, GPIO.RISING,
-                                  callback=gpio_event_handler, bouncetime=200)
-        elif io_type == 'RELAY':
-            GPIO.setup(self.bcm, GPIO.OUT, initial=GPIO.LOW)
-        else:
-            raise ValueError(f"Illegal io_type {io_type}: must be SENSOR or RELAY")
         ports.append(self)
         ports_by_name[name] = self
         ports_by_bcm[self.bcm] = self
@@ -91,10 +71,11 @@ class Port:
         Returns:
             bool: True if the port is is set to generate events.
         """
-        return bool(self.event_name)
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
 
+    @abstractmethod
     def is_sensor(self):
         """Return true if the port is a sensor port.
         Args:
@@ -103,10 +84,11 @@ class Port:
         Returns:
             bool: True if the port is a sensor.
         """
-        return self.io_type == 'SENSOR'
+        pass
 
 
 
+    @abstractmethod
     def is_relay(self):
         """Return true if the port is a relay port.
         Args:
@@ -115,7 +97,7 @@ class Port:
         Returns:
             bool: True if the port is a relay.
         """
-        return self.io_type == 'RELAY'
+        pass
 
 
 
@@ -151,9 +133,7 @@ class Port:
         Returns:
             None
         """
-        if not self.is_relay():
-            raise ValueError(f"Illegal write to non-relay port {self.name}")
-        GPIO.output(self.bcm, value)
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def set_event_name(self, value):
@@ -164,9 +144,7 @@ class Port:
         Returns:
             None
         """
-        if not self.is_sensor():
-            raise ValueError(f"Non-sensor port {self.name} does not generate events")
-        self.event_name = value
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def get_event_name(self):
@@ -176,9 +154,7 @@ class Port:
         Returns:
             str|None: The name of the port's generated event.
         """
-        if not self.is_sensor():
-            raise ValueError(f"Non-sensor port {self.name} does not generate events")
-        return self.event_name
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def clear_count(self):
@@ -189,9 +165,7 @@ class Port:
         Returns:
             None
         """
-        if self.io_type != "SENSOR":
-            raise ValueError(f"Counter access to non-sensor port {self.name}")
-        self.count = 0
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def increment_count(self):
@@ -202,9 +176,7 @@ class Port:
         Returns:
             None
         """
-        if self.io_type != "SENSOR":
-            raise ValueError(f"Counter access to non-sensor port {self.name}")
-        self.count += 1
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def get_count(self):
@@ -215,9 +187,82 @@ class Port:
         Returns:
             int: Counter value
         """
-        if self.io_type != "SENSOR":
-            raise ValueError(f"Counter access to non-sensor port {self.name}")
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
+
+
+class SensorPort(Port):
+    """An alarm system input port"""
+    def __init__(self, name, pcb, physical, bcm, log):
+        super().__init__(name, pcb, physical, bcm, log)
+
+        # The name of the events to generate, or None
+        self.event_name = None
+
+        # Number of times the sensor has raised an alarm
+        # Incremented on alarms and auto-disabled when it reaches
+        # AUTO_DISABLE_COUNT
+        self.count = 0
+
+        # True to log triggers when disabled
+        self.log_when_disabled = False
+
+        # Setup the hardware
+        GPIO.setup(self.bcm, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(self.bcm, GPIO.RISING,
+                              callback=gpio_event_handler, bouncetime=200)
+
+
+    def is_event_generating(self):
+        return bool(self.event_name)
+
+
+    def is_sensor(self):
+        return True
+
+
+    def is_relay(self):
+        return False
+
+
+    def set_event_name(self, value):
+        self.event_name = value
+
+
+    def get_event_name(self):
+        return self.event_name
+
+
+    def clear_count(self):
+        self.count = 0
+
+
+    def increment_count(self):
+        self.count += 1
+
+
+    def get_count(self):
         return self.count
+
+
+class RelayPort(Port):
+    """An alarm system output port"""
+    def __init__(self, name, pcb, physical, bcm, log):
+        super().__init__(name, pcb, physical, bcm, log)
+
+        # Setup the hardware
+        GPIO.setup(self.bcm, GPIO.OUT, initial=GPIO.LOW)
+
+
+    def is_sensor(self):
+        return False
+
+
+    def is_relay(self):
+        return True
+
+
+    def set_bit(self, value):
+        GPIO.output(self.bcm, value)
 
 
 def get_instance(name):
