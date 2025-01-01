@@ -244,7 +244,7 @@ class SensorPort(Port):
         return self.count
 
 
-class RelayPort(Port):
+class ActuatorPort(Port):
     """An alarm system output port"""
     def __init__(self, name, pcb, physical, bcm, log):
         super().__init__(name, pcb, physical, bcm, log)

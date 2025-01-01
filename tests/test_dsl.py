@@ -24,7 +24,7 @@ def test_read_config_relay_port():
             patch('RPi.GPIO.setup') as mock_setup:
 
         #                     Type	    PCB	PhysBCM	Log	Name
-        mock_file = StringIO("RELAY	    A1	29	5	1	Siren0")
+        mock_file = StringIO("ACTUATOR	    A1	29	5	1	Siren0")
         read_config(mock_file)
 
         mock_setup.assert_called_once_with(5, GPIO.OUT, initial=GPIO.LOW)

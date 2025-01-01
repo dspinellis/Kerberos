@@ -17,9 +17,9 @@ from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
 from alarmd.port import increment_sensors, zero_sensors
 from alarmd.port import set_bit, set_sensor_event
 
-#Type	    PCB	PhysBCM	Log	Name
-RELAY	    A1	29	5	1	Siren5
-RELAY	    A2	29	6	0	Siren6
+#Type	        PCB	PhysBCM	Log	Name
+ACTUATOR	    A1	29	5	1	Siren5
+ACTUATOR	    A2	29	6	0	Siren6
 
 %i initial
 
