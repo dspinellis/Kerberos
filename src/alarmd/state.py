@@ -1,11 +1,6 @@
 import os
 import threading
 
-# API functions
-from os import system
-from time import sleep
-from sys import exit
-from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
 
 from . import debug
 from . import event_queue

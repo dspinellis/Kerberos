@@ -9,6 +9,12 @@ from alarmd import debug, port, event_queue
 
 
 SETUP = """
+# Required API functions
+from os import system
+from time import sleep
+from sys import exit
+from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
+
 #Type	    PCB	PhysBCM	Log	Name
 RELAY	    A1	29	5	1	Siren5
 RELAY	    A2	29	6	0	Siren6
