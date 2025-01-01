@@ -24,15 +24,15 @@ import sys
 import syslog
 import argparse
 import threading
-from flask import Flask, jsonify
 import RPi.GPIO as GPIO
 
 from .port import Port
-from .state import State, event_processor, queue_event
+from .rest import app
+from .state import State, event_processor
 
-# Flask setup
-app = Flask(__name__)
 
+def run_rest_server():
+    app.run(host='0.0.0.0', port=5000, debug=False)
 
 def main():
     """Program entry point"""
@@ -54,7 +54,7 @@ def main():
         print("Debug option set\n")
 
     # Start Flask in a separate thread
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread = threading.Thread(target=run_rest_server, daemon=True)
     flask_thread.start()
 
     try:
