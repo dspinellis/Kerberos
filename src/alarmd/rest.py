@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 
-from . import debug, event_queue
+from . import debug
+from .event_queue import event_queue
 
 # Flask setup
 app = Flask(__name__)

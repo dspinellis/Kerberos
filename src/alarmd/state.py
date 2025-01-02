@@ -3,7 +3,7 @@ import threading
 
 
 from . import debug
-from . import event_queue
+from .event_queue import event_queue
 
 # For testing
 from .port import gpio_event_handler

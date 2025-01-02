@@ -3,7 +3,8 @@ import os
 import RPi.GPIO as GPIO
 import sys
 
-from . import debug, event_queue
+from . import debug
+from .event_queue import event_queue
 
 # All ports
 ports_by_name = dict()

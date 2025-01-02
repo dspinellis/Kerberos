@@ -4,8 +4,9 @@ from unittest.mock import patch, call
 import sys
 
 from alarmd.dsl import read_config
+from alarmd.event_queue import event_queue
 from alarmd.state import event_processor
-from alarmd import debug, port, event_queue
+from alarmd import debug, port
 
 
 SETUP = """
