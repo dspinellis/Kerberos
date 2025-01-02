@@ -1,9 +1,12 @@
 alarm-spec.h
 cmd-def.h
 evlst.h
-home.c
-home.dot
 *.o
-./alarmd
+alarmd
 alarm
 vmqueue
+tags
+try-pi
+*.swp
+*.vim
+__pycache__
