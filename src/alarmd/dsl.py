@@ -1,4 +1,3 @@
-import importlib
 import re
 import RPi.GPIO as GPIO
 import sys
@@ -6,35 +5,7 @@ import sys
 from .port import SensorPort, ActuatorPort
 
 from .state import State, all_states
-from . import state
-from . import state as import_target
-
-
-def dynamic_import(source_module_name, component_names, target_module):
-    """
-    Dynamically imports specific elements from the specified
-    source module and injects them into the globals of a specified
-    target module.
-
-    Args:
-        source_module_name (str): The module containing the elements
-        component_names (str): Comma-separated names of components to import
-        target_module (module): The module where the imports
-        should be injected.
-
-    Raises:
-        ImportError: If any specified element cannot be imported or if
-        the source or target module does not exist.
-    """
-    components = [comp.strip() for comp in component_names.split(",")]
-    source_module = importlib.import_module(source_module_name)
-
-    # Inject components into the target module's globals
-    target_globals = target_module.__dict__
-    for component in components:
-        if not hasattr(source_module, component):
-            raise ImportError(f"Cannot import name '{component}' from '{source_module_name}'")
-        target_globals[component] = getattr(source_module, component)
+from .state import __dict__ as state_dict
 
 
 def read_config(input_file):
@@ -47,12 +18,15 @@ def read_config(input_file):
     Returns:
         str: The name of the state from which to start.
     """
+    file_name = input_file.name if hasattr(input_file, 'name') else '-';
+
     current_line_number = 0
     number_of_errors = 0
     initial_state_name = None
 
     # Currently parsed state
     state = None
+    in_python_block = False
 
     for line in input_file:
         current_line_number += 1
@@ -73,10 +47,20 @@ def read_config(input_file):
             io_type, pcb, physical, bcm, log, name = line.split()
             port = ActuatorPort(name, pcb, physical, bcm, log)
 
-        elif match := re.match(r"from\s+(\S+)\s+import\s+(.+)", line):
-            # "from name import c1, c2": Import components to use
-            dynamic_import(match.group(1).strip(), match.group(2),
-                           import_target)
+        # Python code blocks
+        elif line[:3] == '%{':
+            in_python_block = True
+            python_block_lines = ''
+        elif line[:3] == '%}':
+            in_python_block = False
+            try:
+                exec(python_block_lines, state_dict)
+            except Exception as e:
+                sys.stderr.write(f"{file_name}({current_line_number}): {e}\n")
+                number_of_errors += 1
+        elif in_python_block:
+            python_block_lines += line + "\n"
+
         elif match := re.match(r'^(\w+):$', line):
             # "name:": Named state begin
             name = match.group(1)
@@ -120,8 +104,7 @@ def read_config(input_file):
             continue
 
         else:
-            name = input_file.name if hasattr(input_file, 'name') else '-';
-            sys.stderr.write(f"{name}({current_line_number}): syntax error [{line}]\n")
+            sys.stderr.write(f"{file_name}({current_line_number}): syntax error [{line}]\n")
             number_of_errors += 1
 
     if number_of_errors:

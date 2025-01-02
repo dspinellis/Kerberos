@@ -101,6 +101,7 @@ def test_read_timer_transition():
     registration = state.get_instance("astate").get_entry_action(0)
     assert registration == "register_timer_event(10, 'TIMER_10')"
 
+
 def test_initial_state():
     mock_file = StringIO("""%i initial
 
@@ -109,3 +110,13 @@ initial:
     """)
     initial_name = read_config(mock_file)
     assert initial_name == 'initial'
+
+
+def test_python_block():
+    mock_file = StringIO("""%{
+a = 42
+%}
+    """)
+    read_config(mock_file)
+
+    assert eval('a', state.__dict__) == 42
