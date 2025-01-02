@@ -4,7 +4,6 @@ import RPi.GPIO as GPIO
 import sys
 
 from .port import SensorPort, ActuatorPort
-from .rest import app, rest_command_callback
 
 from .state import State, all_states
 from . import state
@@ -112,9 +111,6 @@ def read_config(input_file):
                 timer_value = re.match(r'^([\d.]+)s$', event_name).group(1)
                 event_name = f"TIMER_{timer_value}"
                 state.add_entry_action(f"register_timer_event({timer_value}, '{event_name}')")
-            elif event_name and event_name[:3] == 'Cmd':
-                # "Cmd...": A REST command
-                app.add_url_rule('/cmd/<name>', view_func=rest_command_callback)
             # Event name may be None, which makes it the non-event
             # transition.
             state.add_event_transition(event_name, new_state_name)

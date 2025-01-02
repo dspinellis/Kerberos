@@ -5,6 +5,7 @@ from . import debug, event_queue
 # Flask setup
 app = Flask(__name__)
 
+@app.route('/cmd/<name>', methods=['GET'])
 def rest_cmd(name):
     """
     Function registered to be called when a REST request
