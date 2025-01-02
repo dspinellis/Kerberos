@@ -26,8 +26,10 @@ import argparse
 import threading
 import RPi.GPIO as GPIO
 
+
 from . import debug
-from .port import Port
+from .dsl import read_config
+from .port import Port, list_ports
 from .rest import app
 from .state import State, event_processor
 
@@ -40,9 +42,7 @@ def main():
     """Program entry point"""
     syslog.openlog(ident="alarm")
 
-
-    parser = argparse.ArgumentParser(
-        description='Alarm daemon')
+    parser = argparse.ArgumentParser(description='Security alarm daemon')
 
     parser.add_argument('-d', '--debug',
                         help='Run in debug mode',
@@ -53,12 +53,14 @@ def main():
                         type=str)
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-v", "--values", action="store_true",
-                       help="Show sensor values")
-    group.add_argument("-s", "--set", metavar="NAME",
-                       help="Set the specified actuator")
+    group.add_argument("-l", "--list", action="store_true",
+                       help="List available ports")
     group.add_argument("-r", "--reset", metavar="NAME",
                        help="Reset the specified actuator")
+    group.add_argument("-s", "--set", metavar="NAME",
+                       help="Set the specified actuator")
+    group.add_argument("-v", "--values", action="store_true",
+                       help="Show sensor values")
 
     args = parser.parse_args()
     if args.debug:
@@ -70,10 +72,20 @@ def main():
 
         # Read description file to setup I/O hardware
         with open(args.file, "r") as input_file:
-            initial_state_name = read_spec(input_file)
+            initial_state_name = read_config(input_file)
 
         if args.values:
             sensor_display()
+            # Not reached
+        if args.set:
+            set_bit(args.set, 1)
+            sys.exit(0)
+        if args.reset:
+            set_bit(args.set, 0)
+            sys.exit(0)
+        if args.list:
+            list_ports()
+            sys.exit(0)
 
         # Start Flask in a separate thread
         flask_thread = threading.Thread(target=run_rest_server, daemon=True)

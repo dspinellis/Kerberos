@@ -64,8 +64,8 @@ exit:
 disarm:
 	| syslog(LOG_INFO, "Disarmed")
 	| set_bit("Siren", MAIN_OFF)
-	| unlink(STATUSPATH "dayarm")
-	| touch(STATUSPATH "disarm")
+	| unlink(STATUSPATH + "dayarm")
+	| touch(STATUSPATH + "disarm")
 	| set_sensor_event(ALL, None)
 	| zero_sensors()
 	> living
@@ -92,14 +92,14 @@ arm_init:
 	| zero_sensors()
 	| set_sensor_event(ALL, "ActiveSensor")
 	| ClearCounter(day_alarm)
-	| unlink(STATUSPATH "dayarm")
-	| unlink(STATUSPATH "disarm")
+	| unlink(STATUSPATH + "dayarm")
+	| unlink(STATUSPATH + "disarm")
 	;
 
 day_arm:
 	| call arm_init
 	| set_sensor_event("Door", "DelayedSensor")
-	| touch(STATUSPATH "dayarm")
+	| touch(STATUSPATH + "dayarm")
 	> day_armed
 	;
 

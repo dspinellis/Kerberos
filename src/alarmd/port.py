@@ -336,3 +336,11 @@ def increment_sensors():
         with open(f"{SENSORPATH}/{port.get_name()}", "w") as file:
             pass
         port.increment_count()
+
+
+def list_ports():
+    """List available ports"""
+    for name in ports_by_name:
+        port = ports_by_name[name]
+        print(port.get_name() + ' (' + (
+            'sensor)' if port.is_sensor() else 'actuator)'))
