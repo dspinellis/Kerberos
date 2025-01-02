@@ -179,6 +179,24 @@ def touch(file_path):
         pass
 
 
+# The current state
+state = None
+
+
+
+def get_state():
+    """
+    Return the current state machine state
+
+    Args:
+        None
+
+    Returns:
+        State: The current state machine state
+    """
+    return state
+
+
 def event_processor(initial_state_name):
     """
     Process events from the queue through the configured state machine,
@@ -190,6 +208,7 @@ def event_processor(initial_state_name):
     Returns:
         None
     """
+    global state
     state = get_instance(initial_state_name)
     state.enter()
 

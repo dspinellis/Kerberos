@@ -15,6 +15,30 @@ def client():
     with app.test_client() as client:
         yield client
 
+def test_status_route(client):
+    mock_file = StringIO(SETUP + """
+initial:
+    CmdSecond > second
+    ;
+
+second:
+    > DONE
+    ;
+    """)
+    with patch('RPi.GPIO.output') as mock_output, \
+            patch('RPi.GPIO.setup') as mock_setup:
+        initial_name = read_config(mock_file)
+
+        response = client.get("/cmd/Second")
+        assert response.status_code == 200
+        assert response.json == {"CmdSecond": "OK"}
+
+        event_processor(initial_name)
+
+        response = client.get("/state")
+        assert response.status_code == 200
+        assert response.json == {"state": "DONE"}
+
 
 def test_command_route(client):
     mock_file = StringIO(SETUP + """
