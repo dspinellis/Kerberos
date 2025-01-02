@@ -1,15 +1,22 @@
 import sys
 
-enabled = False
+debug_enabled = False
 
 def enable():
-    global enabled
-    enabled = True
+    """Enable debugging"""
+    global debug_enabled
+    debug_enabled = True
+
+
+def enabled():
+    """Return true if debugging is enabled"""
+    return debug_enabled
 
 
 def disable():
-    global enabled
-    enabled = False
+    """Disable debugging"""
+    global debug_enabled
+    debug_enabled = False
 
 
 def log(*args):
@@ -19,7 +26,7 @@ def log(*args):
     Args:
         *args: The objects to be logged, separated by `sep`.
     """
-    if not enabled:
+    if not enabled():
         return
     message = ' '.join(map(str, args))
     print(message, file=sys.stderr, flush=True)

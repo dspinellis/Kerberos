@@ -26,13 +26,15 @@ import argparse
 import threading
 import RPi.GPIO as GPIO
 
+from . import debug
 from .port import Port
 from .rest import app
 from .state import State, event_processor
 
 
 def run_rest_server():
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    """Thread callback to run the REST server"""
+    app.run(host='0.0.0.0', port=5000, debug=debug.enabled())
 
 def main():
     """Program entry point"""
@@ -49,19 +51,33 @@ def main():
     parser.add_argument('file',
                         help='Alarm specification',
                         type=str)
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-v", "--values", action="store_true",
+                       help="Show sensor values")
+    group.add_argument("-s", "--set", metavar="NAME",
+                       help="Set the specified actuator")
+    group.add_argument("-r", "--reset", metavar="NAME",
+                       help="Reset the specified actuator")
+
     args = parser.parse_args()
     if args.debug:
-        print("Debug option set\n")
-
-    # Start Flask in a separate thread
-    flask_thread = threading.Thread(target=run_rest_server, daemon=True)
-    flask_thread.start()
+        debug.enable()
 
     try:
         # Use BCM numbers for ports
         GPIO.setmode(GPIO.BCM)
+
+        # Read description file to setup I/O hardware
         with open(args.file, "r") as input_file:
             initial_state_name = read_spec(input_file)
+
+        if args.values:
+            sensor_display()
+
+        # Start Flask in a separate thread
+        flask_thread = threading.Thread(target=run_rest_server, daemon=True)
+        flask_thread.start()
 
         event_processor(initial_state_name)
 
