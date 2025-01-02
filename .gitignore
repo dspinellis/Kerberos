@@ -2,7 +2,7 @@ alarm-spec.h
 cmd-def.h
 evlst.h
 *.o
-alarmd
+./alarmd
 alarm
 vmqueue
 tags

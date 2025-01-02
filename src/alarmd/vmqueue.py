@@ -2,15 +2,12 @@ import os
 import sys
 import tempfile
 import time
-import logging
-from pathlib import Path
+from syslog import openlog, closelog, syslog, LOG_ERR
 
 # Constants
-VMQDIR = "/path/to/vmqdir"  # Update to the actual directory
-SCRIPTDIR = "/path/to/scripts"  # Update to the actual script directory
-
-# Configure logging
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+VOICEDIR = "/var/spool/voice"
+VMQDIR = VOICEDIR + "/vmq"
+SCRIPTDIR = "/usr/local/lib/voice"
 
 def vmqueue(cmd):
     """
@@ -25,6 +22,7 @@ def vmqueue(cmd):
     Returns:
         int: 0 if successful, -1 if an error occurred.
     """
+    openlog(ident="vmqueue")
     try:
         # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=False, dir=VMQDIR, prefix="tmp.", mode='w') as temp_file:
@@ -49,8 +47,10 @@ def vmqueue(cmd):
         return 0
 
     except Exception as e:
-        logging.error(f"Error in vmqueue: {e}")
+        syslog(LOG_ERR, f"Error: {e}")
         return -1
+    finally:
+        closelog()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

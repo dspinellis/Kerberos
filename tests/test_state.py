@@ -17,6 +17,7 @@ from sys import exit
 from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
 from alarmd.port import increment_sensors, zero_sensors
 from alarmd.port import set_bit, set_sensor_event
+from alarmd.vmqueue import vmqueue
 
 #Type	        PCB	PhysBCM	Log	Name
 ACTUATOR	    A1	29	5	1	Siren5
@@ -268,6 +269,7 @@ initial:
     | callable(system)
     | callable(unlink)
     | callable(touch)
+    | callable(vmqueue)
     > DONE
     ;
     """)
