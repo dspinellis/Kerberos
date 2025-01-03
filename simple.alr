@@ -2,8 +2,9 @@
 # Simple alarm control file
 #
 
-# Required API functions
 %{
+
+# Required API functions
 from os import system
 from time import sleep
 from sys import exit
