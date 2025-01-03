@@ -7,7 +7,7 @@ from alarmd.rest import app
 from alarmd.dsl import read_config
 from alarmd.state import event_processor
 
-from test_state import SETUP
+from test_state import SETUP, SENSOR_SETUP
 
 @pytest.fixture
 def client():
@@ -90,3 +90,22 @@ def test_404_route(client):
     """Test accessing an undefined route."""
     response = client.get("/undefined")
     assert response.status_code == 404
+
+
+def test_sensor_route(client):
+    mock_file = StringIO(SETUP + SENSOR_SETUP)
+    with patch('RPi.GPIO.input') as mock_input, \
+            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
+            patch('RPi.GPIO.setup') as mock_setup:
+        mock_input.return_value = 12
+        initial_name = read_config(mock_file)
+
+        response = client.get("/sensor/Bedroom")
+        assert response.status_code == 200
+        assert response.json == {"value": 12}
+
+        response = client.get("/sensor/NonExistent")
+        assert response.status_code == 404
+
+        response = client.get("/sensor/Siren5")
+        assert response.status_code == 404

@@ -275,8 +275,9 @@ def get_instance(name):
 
     Returns:
         Port: The object associated with the named port.
+        None: If the name does not specify a known port.
     """
-    return ports_by_name[name]
+    return ports_by_name.get(name)
 
 
 def set_bit(name, value):

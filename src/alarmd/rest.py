@@ -1,6 +1,7 @@
 from flask import Flask, abort, jsonify, request
+import RPi.GPIO as GPIO
 
-from . import debug
+from . import debug, port
 from .event_queue import event_queue
 from .state import get_state, all_states
 
@@ -20,10 +21,10 @@ def rest_cmd(name):
     /cmd/<command> is issued.
 
     Args:
-        namr (str): The command's name.
+        name (str): The command's name.
 
     Returns:
-        str: eventname: "OK"
+        str: <event name>: "OK"
     """
     access_check()
     event = f"Cmd{name}"
@@ -40,3 +41,23 @@ def rest_status():
     return jsonify({
         "state": get_state().get_name(),
     })
+
+
+@app.route('/sensor/<name>', methods=['GET'])
+def rest_sensor(name):
+    """
+    Function registered to be called when a REST request
+    /sensor/<command> is issued.
+
+    Args:
+        sensor (str): The sensor's name.
+
+    Returns:
+        str: JSON with the following structure
+            "value": <port-value>
+    """
+    access_check()
+    sensor_port = port.get_instance(name)
+    if not sensor_port or not sensor_port.is_sensor():
+        abort(404) # Not found
+    return jsonify({"value": GPIO.input(sensor_port.get_bcm())})
