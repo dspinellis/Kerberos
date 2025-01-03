@@ -17,8 +17,12 @@ def client():
 
 def test_status_route(client):
     mock_file = StringIO(SETUP + """
-initial:
+*:
     CmdSecond > second
+    ;
+
+initial:
+    CmdOther > second
     ;
 
 second:
@@ -65,6 +69,9 @@ other:
     with patch('RPi.GPIO.output') as mock_output, \
             patch('RPi.GPIO.setup') as mock_setup:
         initial_name = read_config(mock_file)
+
+        response = client.get("/cmd/NonExistent")
+        assert response.status_code == 404
 
         response = client.get("/cmd/Second")
         assert response.status_code == 200

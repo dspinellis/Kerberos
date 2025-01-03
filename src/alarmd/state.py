@@ -56,6 +56,12 @@ class State:
             eval(action)
 
 
+    def has_event_transition(self, event_name):
+        """Return true if the state directly (not via all_states)
+        supports a given event."""
+        return bool(self.event_transitions.get(event_name))
+
+
     def process_event(self, event_name):
         """Process the specified event return the new state name."""
         if self != all_states:
