@@ -340,7 +340,6 @@ def increment_sensors():
 
 def list_ports():
     """List available ports"""
-    for name in ports_by_name:
-        port = ports_by_name[name]
+    for port in ports:
         print(port.get_name() + ' (' + (
             'sensor)' if port.is_sensor() else 'actuator)'))
