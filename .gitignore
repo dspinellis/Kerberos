@@ -3,7 +3,6 @@ cmd-def.h
 evlst.h
 *.o
 ./alarmd
-alarm
 vmqueue
 tags
 try-pi
