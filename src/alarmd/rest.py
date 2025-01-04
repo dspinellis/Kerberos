@@ -19,6 +19,8 @@ def rest_cmd(name):
     """
     Function registered to be called when a REST request
     /cmd/<command> is issued.
+    This handles commands registered as event transitions for
+    all states (*).
 
     Args:
         name (str): The command's name.
