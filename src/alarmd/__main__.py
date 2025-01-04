@@ -78,10 +78,10 @@ def main():
             sensor_display()
             # Not reached
         if args.set:
-            set_bit(args.set, 1)
+            set_value(args.set, 1)
             sys.exit(0)
         if args.reset:
-            set_bit(args.set, 0)
+            set_value(args.set, 0)
             sys.exit(0)
         if args.list:
             list_ports()

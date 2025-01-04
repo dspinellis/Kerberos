@@ -126,13 +126,24 @@ class Port(ABC):
 
 
 
-    def set_bit(self, value):
+    def set_value(self, value):
         """Set the port to the specified value.
         Args:
             value (int): The value to set the port to (0 or 1).
 
         Returns:
             None
+        """
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
+
+
+    def get_value(self):
+        """Return the port's value.
+        Args:
+            None
+
+        Returns:
+            int: The value to set the port to (0 or 1).
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
@@ -245,6 +256,10 @@ class SensorPort(Port):
         return self.count
 
 
+    def get_value(self):
+        return GPIO.input(self.bcm)
+
+
 class ActuatorPort(Port):
     """An alarm system output port"""
     def __init__(self, name, pcb, physical, bcm, log):
@@ -262,7 +277,7 @@ class ActuatorPort(Port):
         return True
 
 
-    def set_bit(self, value):
+    def set_value(self, value):
         GPIO.output(self.bcm, value)
 
 
@@ -291,7 +306,7 @@ def set_bit(name, value):
     Returns:
         None
     """
-    get_instance(name).set_bit(value)
+    get_instance(name).set_value(value)
 
 
 def set_sensor_event(name, value):

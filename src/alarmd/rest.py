@@ -60,4 +60,4 @@ def rest_sensor(name):
     sensor_port = port.get_instance(name)
     if not sensor_port or not sensor_port.is_sensor():
         abort(404) # Not found
-    return jsonify({"value": GPIO.input(sensor_port.get_bcm())})
+    return jsonify({"value": sensor_port.get_value()})
