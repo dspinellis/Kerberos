@@ -29,7 +29,7 @@ import RPi.GPIO as GPIO
 
 from . import debug
 from .dsl import read_config
-from .port import Port, list_ports
+from .port import Port, list_ports, set_emulated
 from .rest import app
 from .state import State, event_processor
 
@@ -46,6 +46,10 @@ def main():
 
     parser.add_argument('-d', '--debug',
                         help='Run in debug mode',
+                        action='store_true')
+
+    parser.add_argument('-e', '--emulate',
+                        help='Emulate GPIO',
                         action='store_true')
 
     parser.add_argument('file',
@@ -66,9 +70,13 @@ def main():
     if args.debug:
         debug.enable()
 
+    if args.emulate:
+        set_emulated(True)
+
     try:
-        # Use BCM numbers for ports
-        GPIO.setmode(GPIO.BCM)
+        if not args.emulate:
+            # Use BCM numbers for ports
+            GPIO.setmode(GPIO.BCM)
 
         # Read description file to setup I/O hardware
         with open(args.file, "r") as input_file:
@@ -94,7 +102,8 @@ def main():
         event_processor(initial_state_name)
 
     finally:
-        GPIO.cleanup()  # Reset GPIO states
+        if not args.emulate:
+            GPIO.cleanup()  # Reset GPIO states
 
 
 if __name__ == "__main__":

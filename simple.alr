@@ -10,7 +10,7 @@ from time import sleep
 from sys import exit
 from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
 from alarmd.port import (increment_sensors, zero_sensors,
-    set_bit, set_sensor_event)
+    set_bit, set_sensor_event, is_emulated)
 from alarmd.vmqueue import vmqueue
 
 # The main siren uses negative logic, but the relay is wired
@@ -18,6 +18,12 @@ from alarmd.vmqueue import vmqueue
 # straining its spring.
 MAIN_ON =  ON
 MAIN_OFF = OFF
+
+if is_emulated:
+	STATUSPATH = './'
+else:
+	STATUSPATH = '/var/spool/alarm/status/'
+
 %}
 
 

@@ -11,6 +11,16 @@ ports_by_name = dict()
 ports_by_bcm = dict()
 ports = []
 
+# True when GPIO is emulated
+is_emulated = False
+
+
+def set_emulated(value):
+    """Set whether GPIO is emulated or not."""
+    global is_emulated
+    is_emulated = value
+
+
 if "pytest" in sys.modules:
     SENSORPATH='.'
 else:
@@ -57,6 +67,7 @@ class Port(ABC):
         self.pcb = pcb
         self.physical = int(physical)
         self.bcm = int(bcm)
+        self.emulated_value = None
 
         ports.append(self)
         ports_by_name[name] = self
@@ -124,6 +135,30 @@ class Port(ABC):
         """
         return self.bcm
 
+
+
+    def set_emulated_value(self, value):
+        """Set the emulated port to the specified value.
+        Args:
+            value (int): The value to set the port to (0 or 1).
+            This is the value that get_value() will return.
+
+        Returns:
+            None
+        """
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
+
+
+    def get_emulated_value(self):
+        """Return the port's emulated value.
+        This is the value that the port has been set to with set_value()
+        Args:
+            None
+
+        Returns:
+            int: The value to set the port to (0 or 1).
+        """
+        raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
 
     def set_value(self, value):
@@ -219,9 +254,10 @@ class SensorPort(Port):
         self.log_when_disabled = False
 
         # Setup the hardware
-        GPIO.setup(self.bcm, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(self.bcm, GPIO.RISING,
-                              callback=gpio_event_handler, bouncetime=200)
+        if not is_emulated:
+            GPIO.setup(self.bcm, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.add_event_detect(self.bcm, GPIO.RISING,
+                                  callback=gpio_event_handler, bouncetime=200)
 
 
     def is_event_generating(self):
@@ -257,7 +293,17 @@ class SensorPort(Port):
 
 
     def get_value(self):
-        return GPIO.input(self.bcm)
+        if is_emulated:
+            return self.emulated_value
+        else:
+            return GPIO.input(self.bcm)
+
+
+    def set_emulated_value(self, value):
+        if is_emulated:
+            self.emulated_value = value
+        else:
+            raise RuntimeError("Ports are not emulated.")
 
 
 class ActuatorPort(Port):
@@ -266,7 +312,8 @@ class ActuatorPort(Port):
         super().__init__(name, pcb, physical, bcm, log)
 
         # Setup the hardware
-        GPIO.setup(self.bcm, GPIO.OUT, initial=GPIO.LOW)
+        if not is_emulated:
+            GPIO.setup(self.bcm, GPIO.OUT, initial=GPIO.LOW)
 
 
     def is_sensor(self):
@@ -278,7 +325,17 @@ class ActuatorPort(Port):
 
 
     def set_value(self, value):
-        GPIO.output(self.bcm, value)
+        if is_emulated:
+            self.emulated_value = value
+        else:
+            GPIO.output(self.bcm, value)
+
+
+    def get_emulated_value(self):
+        if is_emulated:
+            return self.emulated_value
+        else:
+            raise RuntimeError("Ports are not emulated.")
 
 
 def get_instance(name):
@@ -320,7 +377,12 @@ def set_sensor_event(name, value):
     Returns:
         None
     """
-    get_instance(name).set_event_name(value)
+    if name == '*':
+        for p in ports:
+            if p.is_sensor():
+                p.set_event_name(value)
+    else:
+        get_instance(name).set_event_name(value)
 
 
 def zero_sensors():
@@ -346,9 +408,14 @@ def increment_sensors():
         if not port.is_event_generating():
             debug.log(f"{port} is not generating events")
             continue
-        if not GPIO.input(port.get_bcm()):
-            debug.log(f"{port} is not firing")
-            continue
+        if is_emulated:
+            if not self.emulated_value:
+                debug.log(f"{port} is not firing")
+                continue
+        else:
+            if not GPIO.input(port.get_bcm()):
+                debug.log(f"{port} is not firing")
+                continue
         with open(f"{SENSORPATH}/{port.get_name()}", "w") as file:
             pass
         port.increment_count()

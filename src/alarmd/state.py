@@ -28,6 +28,11 @@ class State:
                 return True
 
 
+    def has_entry_actions(self):
+        """Return true if the state has entry actions."""
+        return len(self.entry_actions) > 0
+
+
     def get_name(self):
         """Return the state's name."""
         return self.name
@@ -160,7 +165,8 @@ def register_timer_event(delay, event_name):
 
 def unlink(file_path):
     """
-    Delete the file specified by file_path.
+    Delete the file specified by file_path without failure if the file
+    does not exist.
 
     Args:
         file_path (str): The path specifying the file to delete.
@@ -168,7 +174,10 @@ def unlink(file_path):
     Returns:
         None
     """
-    os.remove(file_path)
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        pass
 
 
 def touch(file_path):
@@ -221,7 +230,7 @@ def event_processor(initial_state_name):
     debug.log("Starting event processing loop...")
     while state.get_name() != 'DONE':
         debug.log(f"{state=}")
-        if state.has_event_transitions():
+        if state.has_event_transitions() or not state.has_entry_actions():
             # Block until an event is available
             event = event_queue.get()
         else:

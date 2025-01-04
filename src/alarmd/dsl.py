@@ -33,7 +33,7 @@ def read_config(input_file):
         line = line.rstrip()  # Strip trailing newline
 
         # Remove comments
-        line = re.sub(r'^#.*', '', line).strip()
+        line = re.sub(r'^#.*', '', line).rstrip()
 
         # Skip empty lines
         if not line:
