@@ -36,7 +36,7 @@ from .state import State, event_processor
 
 def run_rest_server():
     """Thread callback to run the REST server"""
-    app.run(host='0.0.0.0', port=5000, debug=debug.enabled(),
+    app.run(host='127.0.0.1', port=5000, debug=debug.enabled(),
             use_reloader=False)
 
 def main():
