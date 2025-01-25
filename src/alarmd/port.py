@@ -21,6 +21,14 @@ def set_emulated(value):
     is_emulated = value
 
 
+def reset_globals():
+    """Reset global variables to their default values."""
+    set_emulated(False)
+    ports_by_name.clear()
+    ports_by_bcm.clear()
+    ports.clear()
+
+
 if "pytest" in sys.modules:
     SENSORPATH='.'
 else:
@@ -39,7 +47,7 @@ def gpio_event_handler(channel):
     """
     port = ports_by_bcm[channel]
     name = port.get_event_name()
-    debug.log(f"Queuing sensor event {name}")
+    debug.log(f"Queuing sensor event {name=} for {channel=} {port=}")
     event_queue.put(name)
 
 
@@ -409,7 +417,7 @@ def increment_sensors():
             debug.log(f"{port} is not generating events")
             continue
         if is_emulated:
-            if not self.emulated_value:
+            if not port.emulated_value:
                 debug.log(f"{port} is not firing")
                 continue
         else:
