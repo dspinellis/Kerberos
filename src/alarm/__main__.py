@@ -60,7 +60,7 @@ def shell_help():
     """Display available commands."""
     print('Valid commands are:')
     print("x: eXit this command line interface");
-    
+
     for c in commands:
         print(f"{c.get_letter()}: {c.get_help()}")
 

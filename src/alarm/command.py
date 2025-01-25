@@ -65,5 +65,3 @@ class Command:
             str: The eventName converted event_name
         """
         return re.sub(r'(?<!^)(?=[A-Z])', '_', self.event_name).lower()
-
-
