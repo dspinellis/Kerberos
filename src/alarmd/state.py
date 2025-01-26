@@ -8,8 +8,12 @@ from .event_queue import event_queue
 # For testing
 from .port import gpio_event_handler
 
-# All states
+# Map from state name to state instance
 states_by_name = dict()
+
+# The current state
+state = None
+
 
 class State:
     def __init__(self, name):
@@ -21,16 +25,13 @@ class State:
         states_by_name[name] = self
 
 
-    def has_event_transitions(self):
-        """Return true if the state has event actions associated with it."""
+    def has_direct_transition(self):
+        """Return true if the state has a direct (non-event)
+        transition associated with it."""
         for k in self.event_transitions:
-            if k:
+            if not k:
                 return True
-
-
-    def has_entry_actions(self):
-        """Return true if the state has entry actions."""
-        return len(self.entry_actions) > 0
+        return False
 
 
     def get_name(self):
@@ -68,7 +69,7 @@ class State:
 
 
     def process_event(self, event_name):
-        """Process the specified event return the new state name."""
+        """Transition on the specified event; return the new state name."""
         if self != all_states:
             if new_state_name := all_states.process_event(event_name):
                 return new_state_name
@@ -89,7 +90,7 @@ class State:
 
     def __str__(self):
         """Pretty-print the instance."""
-        return f"State {self.name=} {self.counter=}"
+        return f"State {self.name=} {self.counter=} {self.event_transitions=}"
 
 
     def __repr__(self):
@@ -194,11 +195,6 @@ def touch(file_path):
         pass
 
 
-# The current state
-state = None
-
-
-
 def get_state():
     """
     Return the current state machine state
@@ -210,6 +206,14 @@ def get_state():
         State: The current state machine state
     """
     return state
+
+
+def reset_globals():
+    """Initialize global state variables."""
+    global state, all_states, states_by_name
+    state = None
+    states_by_name = dict()
+    all_states.__init__("*")
 
 
 def event_processor(initial_state_name):
@@ -230,13 +234,16 @@ def event_processor(initial_state_name):
     debug.log("Starting event processing loop...")
     while state.get_name() != 'DONE':
         debug.log(f"{state=}")
-        if state.has_event_transitions() or not state.has_entry_actions():
+        debug.log(f"{all_states=}")
+        if not state.has_direct_transition():
             # Block until an event is available
             event = event_queue.get()
         else:
+            # Execute entry actions and default transition
             event = None
         debug.log(f"Process event {event}")
         new_state_name = state.process_event(event)
+        debug.log(f"{new_state_name=}")
         new_state = get_instance(new_state_name)
         debug.log(f"Enter {new_state}")
         if new_state != state:

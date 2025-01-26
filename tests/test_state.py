@@ -37,6 +37,11 @@ SENSOR	    S04	28	81	1	Bedroom
 SENSOR	    S07	40	82	1	Window
 """
 
+@pytest.fixture(autouse=True)
+def reset_globals():
+    """Fixture to reset global variables before each test."""
+    port.reset_globals()
+
 def test_entry_actions():
     mock_file = StringIO(SETUP + """
 initial:

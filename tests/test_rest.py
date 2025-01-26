@@ -2,7 +2,7 @@ from io import StringIO
 import pytest
 from unittest.mock import patch, call
 
-from alarmd import debug
+from alarmd import debug, state, port
 from alarmd.rest import app
 from alarmd.dsl import read_config
 from alarmd.state import event_processor
@@ -14,6 +14,13 @@ def client():
     """Fixture for creating a test client."""
     with app.test_client() as client:
         yield client
+
+@pytest.fixture(autouse=True)
+def reset_globals():
+    """Fixture to reset global variables before each test."""
+    state.reset_globals()
+    port.reset_globals()
+
 
 def test_status_route(client):
     mock_file = StringIO(SETUP + """
