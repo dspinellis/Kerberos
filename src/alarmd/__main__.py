@@ -23,8 +23,9 @@ import argparse
 import sys
 import syslog
 import argparse
-import threading
+import os
 import RPi.GPIO as GPIO
+import threading
 
 
 from . import debug
@@ -42,6 +43,8 @@ def run_rest_server():
 def main():
     """Program entry point"""
     syslog.openlog(ident="alarm")
+    syslog.syslog(syslog.LOG_INFO,
+                  f"starting up: pid {os.getpid()}")
 
     parser = argparse.ArgumentParser(description='Security alarm daemon')
 

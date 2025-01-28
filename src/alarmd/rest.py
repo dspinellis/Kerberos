@@ -1,5 +1,6 @@
 from flask import Flask, abort, jsonify, request
 import RPi.GPIO as GPIO
+import syslog
 
 from . import debug, port
 from .event_queue import event_queue
@@ -33,6 +34,7 @@ def rest_cmd(name):
     debug.log(f"Queuing REST command event {event}")
     if not all_states.has_event_transition(event):
         abort(404) # Not found
+    syslog.syslog(syslog.LOG_INFO, f"command: {event}")
     event_queue.put(event)
     return jsonify({event: "OK"})
 

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import os
 import RPi.GPIO as GPIO
 import sys
+import syslog
 
 from . import debug
 from .event_queue import event_queue
@@ -48,6 +49,7 @@ def gpio_event_handler(channel):
     port = ports_by_bcm[channel]
     name = port.get_event_name()
     debug.log(f"Queuing sensor event {name=} for {channel=} {port=}")
+    syslog.syslog(syslog.LOG_INFO, f"trigger: {name}")
     event_queue.put(name)
 
 
@@ -336,6 +338,8 @@ class ActuatorPort(Port):
         if is_emulated:
             self.emulated_value = value
         else:
+            syslog.syslog(syslog.LOG_INFO,
+                          f"set {self.name} {'on' if value else 'off'}")
             GPIO.output(self.bcm, value)
 
 
@@ -424,8 +428,12 @@ def increment_sensors():
             if not GPIO.input(port.get_bcm()):
                 debug.log(f"{port} is not firing")
                 continue
-        with open(f"{SENSORPATH}/{port.get_name()}", "w") as file:
-            pass
+        file_path = f"{SENSORPATH}/{port.get_name()}"
+        try:
+            with open(file_path, "w") as file:
+                pass
+        except OSError as e:
+            syslog.syslog(syslog.LOG_ERR, f"Failed to create {file_path}: {e}")
         port.increment_count()
 
 
