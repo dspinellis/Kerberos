@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 import time
-from syslog import openlog, closelog, syslog, LOG_ERR
+from syslog import syslog, LOG_ERR
 
 # Constants
 VOICEDIR = "/var/spool/voice"
@@ -22,7 +22,6 @@ def vmqueue(cmd):
     Returns:
         int: 0 if successful, -1 if an error occurred.
     """
-    openlog(ident="vmqueue")
     try:
         # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=False, dir=VMQDIR, prefix="tmp.", mode='w') as temp_file:
@@ -49,8 +48,6 @@ def vmqueue(cmd):
     except Exception as e:
         syslog(LOG_ERR, f"Error: {e}")
         return -1
-    finally:
-        closelog()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
