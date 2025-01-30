@@ -5,9 +5,6 @@ import threading
 from . import debug
 from .event_queue import event_queue
 
-# For testing
-from .port import gpio_event_handler
-
 # Map from state name to state instance
 states_by_name = dict()
 

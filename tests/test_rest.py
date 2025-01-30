@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import patch, call
 
 from alarmd import debug, state, port
+from alarmd.port import ActuatorPort, SensorPort
 from alarmd.rest import app
 from alarmd.dsl import read_config
 from alarmd.state import event_processor
@@ -36,19 +37,17 @@ second:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
+    initial_name = read_config(mock_file)
 
-        response = client.get("/cmd/Second")
-        assert response.status_code == 200
-        assert response.json == {"CmdSecond": "OK"}
+    response = client.get("/cmd/Second")
+    assert response.status_code == 200
+    assert response.json == {"CmdSecond": "OK"}
 
-        event_processor(initial_name)
+    event_processor(initial_name)
 
-        response = client.get("/state")
-        assert response.status_code == 200
-        assert response.json == {"state": "DONE"}
+    response = client.get("/state")
+    assert response.status_code == 200
+    assert response.json == {"state": "DONE"}
 
 
 def test_command_route(client):
@@ -73,8 +72,7 @@ other:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    with patch.object(ActuatorPort, "set_value") as mock_set_value:
         initial_name = read_config(mock_file)
 
         response = client.get("/cmd/NonExistent")
@@ -89,8 +87,8 @@ other:
         assert response.json == {"CmdOther": "OK"}
 
         event_processor(initial_name)
-        assert mock_output.call_count == 3
-        mock_output.assert_has_calls([call(5, 1), call(6, 0), call(6, 1)])
+        assert mock_set_value.call_count == 3
+        mock_set_value.assert_has_calls([call(1), call(0), call(1)])
 
 
 def test_404_route(client):
@@ -101,10 +99,8 @@ def test_404_route(client):
 
 def test_sensor_route(client):
     mock_file = StringIO(SETUP + SENSOR_SETUP)
-    with patch('RPi.GPIO.input') as mock_input, \
-            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        mock_input.return_value = 12
+    with patch.object(SensorPort, "get_value") as mock_get_value:
+        mock_get_value.return_value = 12
         initial_name = read_config(mock_file)
 
         response = client.get("/sensor/Bedroom")

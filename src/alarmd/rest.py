@@ -1,5 +1,4 @@
 from flask import Flask, abort, jsonify, request
-import RPi.GPIO as GPIO
 import syslog
 
 from . import debug, port

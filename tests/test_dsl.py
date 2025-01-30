@@ -1,37 +1,28 @@
 import pytest
 from io import StringIO
 from unittest.mock import patch, call
-import RPi.GPIO as GPIO
 
 from alarmd.dsl import read_config
-from alarmd.port import gpio_event_handler, set_bit
+from alarmd.port import get_instance, set_bit
 from alarmd import state
 
 def test_read_config_sensor_port():
-    with patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    #                     Type	    PCB	PhysBCM	Log	Name
+    mock_file = StringIO("SENSOR	S02	26	7	1	Entrance\n")
+    read_config(mock_file)
+    port = get_instance("Entrance")
+    assert port.is_sensor()
+    assert port.is_always_logging()
+    assert port.get_bcm() == 7
 
-        #                     Type	    PCB	PhysBCM	Log	Name
-        mock_file = StringIO("SENSOR	S02	26	7	1	Entrance\n")
-        read_config(mock_file)
 
-        mock_setup.assert_called_once_with(7, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        mock_add_event_detect.assert_called_once_with(7, GPIO.RISING,
-                                  callback=gpio_event_handler, bouncetime=200)
-
-def test_read_config_relay_port():
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-
-        #                     Type	    PCB	PhysBCM	Log	Name
-        mock_file = StringIO("ACTUATOR	    A1	29	5	1	Siren0")
-        read_config(mock_file)
-
-        mock_setup.assert_called_once_with(5, GPIO.OUT, initial=GPIO.LOW)
-
-        # Verify that output can be called
-        set_bit('Siren0', 1)
-        mock_output.assert_called_once_with(5, 1)
+def test_read_config_actuator_port():
+    #                     Type	        PCB	PhysBCM	Log	Name
+    mock_file = StringIO("ACTUATOR	    A1	29	5	1	Siren0")
+    read_config(mock_file)
+    port = get_instance("Siren0")
+    assert port.is_actuator()
+    assert port.get_bcm() == 5
 
 
 def test_read_entry_actions():

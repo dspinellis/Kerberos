@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+# See https://libgpiod.readthedocs.io/en/latest/python_api.html
+import gpiod
 import os
-import RPi.GPIO as GPIO
 import sys
 import syslog
+import threading
+from datetime import timedelta
 
 from . import debug
 from .event_queue import event_queue
@@ -14,6 +17,13 @@ ports = []
 
 # True when GPIO is emulated
 is_emulated = False
+
+# LineRequest
+# See https://libgpiod.readthedocs.io/en/latest/python_line_request.html
+request = None
+
+CHIP_PATH = "/dev/gpiochip0"
+DISABLEPATH = "/var/spool/alarm/disable/"
 
 
 def set_emulated(value):
@@ -36,21 +46,41 @@ else:
     SENSORPATH="/var/spool/alarm/sensor/"
 
 
-def gpio_event_handler(channel):
+def watch_line_value(request):
     """
-    Function registered to be called when a GPIO input rises.
+    Thread function to monitor GPIO input rises.
 
     Args:
-        channel (int): The port that fired.
+        request (LineRequest ): The LineRequest object to monitor
 
     Returns:
         None
     """
-    port = ports_by_bcm[channel]
-    name = port.get_event_name()
-    debug.log(f"Queuing sensor event {name=} for {channel=} {port=}")
-    syslog.syslog(syslog.LOG_INFO, f"trigger: {name}")
-    event_queue.put(name)
+    while True:
+        # Blocks until at least one event is available
+        for event in request.read_edge_events():
+            port = ports_by_bcm[event.line_offset]
+            port_name = port.get_name()
+
+            # Auto-disabled?
+            if port.get_count() > 3:
+                syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (auto-disabled)")
+                continue
+
+            # Not enabled?
+            event_name = port.get_event_name()
+            if not event_name:
+                if port.is_always_logging():
+                    syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (disabled)")
+                continue
+
+            # Disabled by user file?
+            if port.user_disabled():
+                syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (user-disabled)")
+                continue
+
+            debug.log(f"Queueing {event_name=} for {port_name=}")
+            event_queue.put(event_name)
 
 
 class Port(ABC):
@@ -85,6 +115,19 @@ class Port(ABC):
         debug.log(self)
 
 
+    @abstractmethod
+    def gpiod_line_config(self):
+        """Return the port's gpiod configuration structure.
+        Args:
+            None
+
+        Returns:
+            dict: A single element dict with Line configuration suitable
+                for passing to gpiod.request_lines config argument.
+        """
+        pass
+
+
     def is_event_generating(self):
         """Return true if the port is set to generate events.
         Args:
@@ -111,7 +154,7 @@ class Port(ABC):
 
 
     @abstractmethod
-    def is_relay(self):
+    def is_actuator(self):
         """Return true if the port is a relay port.
         Args:
             None
@@ -261,13 +304,23 @@ class SensorPort(Port):
         self.count = 0
 
         # True to log triggers when disabled
-        self.log_when_disabled = False
+        # Was log_when_disabled in the C version
+        self.always_logging = bool(log)
 
-        # Setup the hardware
-        if not is_emulated:
-            GPIO.setup(self.bcm, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(self.bcm, GPIO.RISING,
-                                  callback=gpio_event_handler, bouncetime=200)
+
+    def gpiod_line_config(self):
+        return {
+            self.bcm: gpiod.LineSettings(
+                direction=gpiod.line.Direction.INPUT,
+                bias=gpiod.line.Bias.PULL_UP,
+                edge_detection=gpiod.line.Edge.RISING,
+                debounce_period=timedelta(milliseconds=200),
+            )
+        }
+
+
+    def is_always_logging(self):
+        return self.always_logging
 
 
     def is_event_generating(self):
@@ -278,7 +331,7 @@ class SensorPort(Port):
         return True
 
 
-    def is_relay(self):
+    def is_actuator(self):
         return False
 
 
@@ -306,7 +359,7 @@ class SensorPort(Port):
         if is_emulated:
             return self.emulated_value
         else:
-            return GPIO.input(self.bcm)
+            return 1 if request.get_value(self.bcm) == gpiod.line.Value.ACTIVE else 0
 
 
     def set_emulated_value(self, value):
@@ -315,22 +368,37 @@ class SensorPort(Port):
         else:
             raise RuntimeError("Ports are not emulated.")
 
+    def user_disabled(self):
+        """
+        Return True if the port has been externally disabled by the user.
+
+        Returns:
+            bool: True if the file exists, indicating the port is disabled.
+        """
+        file_path = os.path.join(DISABLEPATH, self.get_name())
+        return os.path.exists(file_path)
+
 
 class ActuatorPort(Port):
     """An alarm system output port"""
     def __init__(self, name, pcb, physical, bcm, log):
         super().__init__(name, pcb, physical, bcm, log)
 
-        # Setup the hardware
-        if not is_emulated:
-            GPIO.setup(self.bcm, GPIO.OUT, initial=GPIO.LOW)
+
+    def gpiod_line_config(self):
+        return {
+            self.bcm: gpiod.LineSettings(
+                direction=gpiod.line.Direction.OUTPUT,
+                output_value=gpiod.line.Value.INACTIVE
+            )
+        }
 
 
     def is_sensor(self):
         return False
 
 
-    def is_relay(self):
+    def is_actuator(self):
         return True
 
 
@@ -340,7 +408,7 @@ class ActuatorPort(Port):
         else:
             syslog.syslog(syslog.LOG_INFO,
                           f"set {self.name} {'on' if value else 'off'}")
-            GPIO.output(self.bcm, value)
+            request.set_value(self.bcm, gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE)
 
 
     def get_emulated_value(self):
@@ -420,14 +488,9 @@ def increment_sensors():
         if not port.is_event_generating():
             debug.log(f"{port} is not generating events")
             continue
-        if is_emulated:
-            if not port.emulated_value:
-                debug.log(f"{port} is not firing")
-                continue
-        else:
-            if not GPIO.input(port.get_bcm()):
-                debug.log(f"{port} is not firing")
-                continue
+        if not port.get_value():
+            debug.log(f"{port} is not firing")
+            continue
         file_path = f"{SENSORPATH}/{port.get_name()}"
         try:
             with open(file_path, "w") as file:
@@ -442,3 +505,31 @@ def list_ports():
     for port in ports:
         print(port.get_name() + ' (' + (
             'sensor)' if port.is_sensor() else 'actuator)'))
+
+
+def request_lines():
+    """Setup and return all the port monitoring object.
+    The object is set in this module to be used for port I/O.
+    A thread is setup for monitoring and queuing port events.
+    The returned object shall be used as a context to free to
+    acquired resources.
+        
+    Args:
+        None
+
+    Returns:
+        LineRequest : The LineRequest object for the configured ports.
+    """
+    global request
+    # Obtain list of port configurations dicts
+    port_configs=[port.gpiod_line_config() for port in ports]
+    # Convert it into a single dict
+    config = {k: v for d in port_configs for k, v in d.items()}
+    request = gpiod.request_lines(
+        CHIP_PATH,
+        consumer="alarm",
+        config=config
+    )
+    event_thread = threading.Thread(target=watch_line_value, args=[request], daemon=True)
+    event_thread.start()
+    return request

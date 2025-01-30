@@ -11,41 +11,20 @@ def reset_globals():
     port.set_emulated(True)
 
 
-@pytest.fixture
-def mock_gpio():
-    """Mock the RPi.GPIO module to avoid hardware dependency."""
-    with patch('alarmd.port.GPIO') as mock_gpio:
-        mock_gpio.setup = MagicMock()
-        mock_gpio.add_event_detect = MagicMock()
-        mock_gpio.input = MagicMock(return_value=1)
-        mock_gpio.output = MagicMock()
-        yield mock_gpio
-
-
-def test_sensor_port_initialization(mock_gpio):
+def test_sensor_port_initialization():
     """Test SensorPort initialization."""
     sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
     assert sensor.get_name() == "TestSensor"
     assert sensor.is_sensor()
-    assert not sensor.is_relay()
+    assert not sensor.is_actuator()
 
 
-def test_actuator_port_initialization(mock_gpio):
+def test_actuator_port_initialization():
     """Test ActuatorPort initialization."""
     actuator = port.ActuatorPort("TestActuator", "P2", 2, 18, True)
     assert actuator.get_name() == "TestActuator"
     assert not actuator.is_sensor()
-    assert actuator.is_relay()
-
-
-def test_gpio_event_handler(mock_gpio):
-    """Test GPIO event handler functionality."""
-    sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
-    sensor.set_event_name("AlarmTriggered")
-
-    with patch('alarmd.event_queue.event_queue.put') as mock_put:
-        port.gpio_event_handler(17)
-        mock_put.assert_called_once_with("AlarmTriggered")
+    assert actuator.is_actuator()
 
 
 def test_set_emulated():
@@ -66,14 +45,14 @@ def test_get_instance():
     assert len(port.ports) == 1
 
 
-def test_set_bit(mock_gpio):
+def test_set_bit():
     """Test setting port value using set_bit."""
     actuator = port.ActuatorPort("TestActuator", "P2", 2, 18, True)
 
-    with patch('alarmd.port.GPIO.output') as mock_output:
+    with patch.object(port.ActuatorPort, "set_value") as mock_set_value:
         port.set_emulated(False)
         port.set_bit("TestActuator", 1)
-        mock_output.assert_called_once_with(18, 1)
+        mock_set_value.assert_called_once_with(1)
 
 
 def test_set_sensor_event():
@@ -96,7 +75,7 @@ def test_zero_sensors():
         mock_remove.assert_called_once()
 
 
-def test_increment_sensors_firing(mock_gpio):
+def test_increment_sensors_firing():
     """Test incrementing sensors that are firing."""
     with patch('alarmd.port.open', mock_open()) as mock_file:
         sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
@@ -108,7 +87,7 @@ def test_increment_sensors_firing(mock_gpio):
         mock_file.assert_called_once_with(f"{port.SENSORPATH}/TestSensor", "w")
 
 
-def test_increment_sensors_not_firing(mock_gpio):
+def test_increment_sensors_not_firing():
     """Test incrementing sensors that are firing."""
     with patch('alarmd.port.open', mock_open()) as mock_file:
         sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)

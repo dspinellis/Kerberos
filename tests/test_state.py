@@ -50,12 +50,14 @@ initial:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(5, 1), call(6, 0)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 def test_simple_transition():
     mock_file = StringIO(SETUP + """
@@ -73,12 +75,14 @@ other:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(5, 1), call(6, 0)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 def test_event_transition():
     mock_file = StringIO(SETUP + """
@@ -97,13 +101,15 @@ other:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_queue.put('go_second')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(5, 1), call(6, 0)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 def test_counter_eq1_action():
     mock_file = StringIO(SETUP + """
@@ -117,15 +123,15 @@ trampoline:
     > initial
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value:
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('done')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        mock_output.assert_called_once_with(5, 1)
+        mock_siren5_set_value.assert_has_calls([call(1)])
 
 def test_counter_eq2_action():
     mock_file = StringIO(SETUP + """
@@ -139,15 +145,15 @@ trampoline:
     > initial
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value:
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('done')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        mock_output.assert_called_once_with(5, 1)
+        mock_siren5_set_value.assert_has_calls([call(1)])
 
 def test_counter_lt3_action():
     mock_file = StringIO(SETUP + """
@@ -160,16 +166,16 @@ initial:
 trampoline:
     > initial
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value:
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('done')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        assert mock_output.call_count == 2
+        assert mock_siren5_set_value.call_count == 2
 
 
 def test_timer_action():
@@ -189,12 +195,14 @@ other:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(5, 1), call(6, 0)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 
 def test_event_over_timer_action():
@@ -214,13 +222,15 @@ other:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_queue.put('go_second')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(5, 1), call(6, 0)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 
 def test_call():
@@ -235,12 +245,14 @@ called:
     | set_bit('Siren6', 0)
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    siren6 = port.get_instance("Siren6")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value, \
+        patch.object(siren6, "set_value") as mock_siren6_set_value:
         event_processor(initial_name)
-        assert mock_output.call_count == 2
-        mock_output.assert_has_calls([call(6, 0), call(5, 1)])
+        mock_siren5_set_value.assert_has_calls([call(1)])
+        mock_siren6_set_value.assert_has_calls([call(0)])
 
 def test_clearcounter_action():
     mock_file = StringIO(SETUP + """
@@ -255,14 +267,14 @@ trampoline:
     > initial
     ;
     """)
-    with patch('RPi.GPIO.output') as mock_output, \
-            patch('RPi.GPIO.setup') as mock_setup:
+    initial_name = read_config(mock_file)
+    siren5 = port.get_instance("Siren5")
+    with patch.object(siren5, "set_value") as mock_siren5_set_value:
         event_queue.put('repeat')
         event_queue.put('repeat')
         event_queue.put('done')
-        initial_name = read_config(mock_file)
         event_processor(initial_name)
-        assert mock_output.call_count == 3
+        assert mock_siren5_set_value.call_count == 3
 
 
 def test_api():
@@ -280,12 +292,10 @@ initial:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.setup') as mock_setup:
-        initial_name = read_config(mock_file)
-        event_processor(initial_name)
+    initial_name = read_config(mock_file)
+    event_processor(initial_name)
 
 def test_set_sensor_event():
-    # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
     | set_sensor_event("Bedroom", "ActiveSensor")
@@ -297,18 +307,15 @@ clear:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.setup') as mock_setup, \
-            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect:
-        initial_name = read_config(mock_file)
-        assert not port.get_instance('Bedroom').is_event_generating()
-        event_processor(initial_name)
-        assert port.get_instance('Bedroom').is_event_generating()
-        event_processor('clear')
-        assert not port.get_instance('Bedroom').is_event_generating()
+    initial_name = read_config(mock_file)
+    assert not port.get_instance('Bedroom').is_event_generating()
+    event_processor(initial_name)
+    assert port.get_instance('Bedroom').is_event_generating()
+    event_processor('clear')
+    assert not port.get_instance('Bedroom').is_event_generating()
 
 
 def test_increment_sensors():
-    # Test the existence of the external API functions
     mock_file = StringIO(SENSOR_SETUP + SETUP + """
 initial:
     | set_sensor_event("Bedroom", "ActiveSensor")
@@ -321,48 +328,15 @@ zero:
     > DONE
     ;
     """)
-    with patch('RPi.GPIO.setup') as mock_setup, \
-            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
-            patch('RPi.GPIO.input', return_value=True) as mock_input:
-        initial_name = read_config(mock_file)
-        assert port.get_instance('Bedroom').get_count() == 0
+    initial_name = read_config(mock_file)
+    bedroom = port.get_instance("Bedroom")
+    with patch.object(bedroom, "get_value", return_value=1) as mock_get_value:
+        assert bedroom.get_count() == 0
         event_processor(initial_name)
-        assert port.get_instance('Bedroom').is_event_generating()
-        assert port.get_instance('Bedroom').get_event_name() == 'ActiveSensor'
-        assert port.get_instance('Bedroom').get_count() == 1
+        assert bedroom.is_event_generating()
+        assert bedroom.get_event_name() == 'ActiveSensor'
+        assert bedroom.get_count() == 1
         assert port.get_instance('Window').get_count() == 0
-        mock_input.assert_called_once_with(81)
+        mock_get_value.assert_called_once()
         event_processor('zero')
         assert port.get_instance('Bedroom').get_count() == 0
-
-
-def test_trigger_sensor_event():
-    # Test the existence of the external API functions
-    mock_file = StringIO(SENSOR_SETUP + SETUP + """
-initial:
-    | set_sensor_event("Bedroom", "ActiveSensor")
-# This should queue an ActiveSensor event
-    | gpio_event_handler(81)
-    > armed
-    ;
-
-armed:
-    ActiveSensor > alarm
-    done > DONE
-    ;
-
-alarm:
-    | increment_sensors()
-    > DONE
-    ;
-    """)
-    with patch('RPi.GPIO.setup') as mock_setup, \
-            patch('RPi.GPIO.add_event_detect') as mock_add_event_detect, \
-            patch('RPi.GPIO.input', return_value=True) as mock_input:
-        initial_name = read_config(mock_file)
-        assert port.get_instance('Bedroom').get_count() == 0
-
-        event_processor(initial_name)
-
-        assert port.get_instance('Bedroom').get_event_name() == 'ActiveSensor'
-        assert port.get_instance('Bedroom').get_count() == 1

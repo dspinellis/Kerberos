@@ -24,13 +24,12 @@ import sys
 import syslog
 import argparse
 import os
-import RPi.GPIO as GPIO
 import threading
 
 
 from . import debug
 from .dsl import read_config
-from .port import Port, list_ports, set_emulated
+from .port import Port, list_ports, set_emulated, request_lines
 from .rest import app
 from .state import State, event_processor
 
@@ -77,37 +76,30 @@ def main():
     if args.emulate:
         set_emulated(True)
 
-    try:
-        if not args.emulate:
-            # Use BCM numbers for ports
-            GPIO.setmode(GPIO.BCM)
+    # Read description file to setup I/O hardware
+    with open(args.file, "r") as input_file:
+        initial_state_name = read_config(input_file)
 
-        # Read description file to setup I/O hardware
-        with open(args.file, "r") as input_file:
-            initial_state_name = read_config(input_file)
+    if args.values:
+        sensor_display()
+        # Not reached
+    if args.set:
+        set_value(args.set, 1)
+        sys.exit(0)
+    if args.reset:
+        set_value(args.set, 0)
+        sys.exit(0)
+    if args.list:
+        list_ports()
+        sys.exit(0)
 
-        if args.values:
-            sensor_display()
-            # Not reached
-        if args.set:
-            set_value(args.set, 1)
-            sys.exit(0)
-        if args.reset:
-            set_value(args.set, 0)
-            sys.exit(0)
-        if args.list:
-            list_ports()
-            sys.exit(0)
+    # Start Flask in a separate thread
+    flask_thread = threading.Thread(target=run_rest_server, daemon=True)
+    flask_thread.start()
 
-        # Start Flask in a separate thread
-        flask_thread = threading.Thread(target=run_rest_server, daemon=True)
-        flask_thread.start()
-
+    with request_lines() as request:
         event_processor(initial_state_name)
 
-    finally:
-        if not args.emulate:
-            GPIO.cleanup()  # Reset GPIO states
 
 
 if __name__ == "__main__":

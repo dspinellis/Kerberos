@@ -1,5 +1,4 @@
 import re
-import RPi.GPIO as GPIO
 import sys
 
 from .port import SensorPort, ActuatorPort
