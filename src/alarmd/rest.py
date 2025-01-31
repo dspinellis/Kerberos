@@ -1,9 +1,13 @@
-from flask import Flask, abort, jsonify, request
+"""Implement alarm's REST interface."""
+
 import syslog
 
-from . import debug, port
-from .event_queue import event_queue
-from .state import get_state, all_states
+from flask import Flask, abort, jsonify, request
+
+from alarmd.debug import Debug
+from alarmd.port import Port
+from alarmd.event_queue import event_queue
+from alarmd.state import State
 
 # Flask setup
 app = Flask(__name__)
@@ -31,8 +35,8 @@ def rest_cmd(name):
     """
     access_check()
     event = f"Cmd{name}"
-    debug.log(f"Queuing REST command event {event}")
-    if not all_states.has_event_transition(event):
+    Debug.log(f"Queuing REST command event {event}")
+    if not State.all_states.has_event_transition(event):
         abort(404)  # Not found
     syslog.syslog(syslog.LOG_INFO, f"command: {event}")
     event_queue.put(event)
@@ -41,10 +45,11 @@ def rest_cmd(name):
 
 @app.route("/state", methods=["GET"])
 def rest_status():
+    """Return the alarm's state."""
     access_check()
     return jsonify(
         {
-            "state": get_state().get_name(),
+            "state": State.get_state().get_name(),
         }
     )
 
@@ -63,7 +68,7 @@ def rest_sensor(name):
             "value": <port-value>
     """
     access_check()
-    sensor_port = port.get_instance(name)
+    sensor_port = Port.get_instance_by_name(name)
     if not sensor_port or not sensor_port.is_sensor():
         abort(404)  # Not found
     return jsonify({"value": sensor_port.get_value()})

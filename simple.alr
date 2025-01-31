@@ -9,7 +9,8 @@ from os import system
 from time import sleep
 from sys import exit
 from syslog import syslog, LOG_INFO, LOG_DEBUG, LOG_WARNING, closelog
-from alarmd.port import (increment_sensors, zero_sensors,
+
+from alarmd import (increment_sensors, zero_sensors,
     set_bit, set_sensor_event, is_emulated)
 from alarmd.vmqueue import vmqueue
 

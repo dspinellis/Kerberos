@@ -1,25 +1,100 @@
+"""State transition engine for handling the DSL-specified configuration."""
+
 import os
 import threading
+from time import sleep
 
 
-from . import debug
+from alarmd.debug import Debug
 from .event_queue import event_queue
-
-# Map from state name to state instance
-states_by_name = dict()
-
-# The current state
-state = None
 
 
 class State:
+    """State transition engine."""
+
+    # Map from state name to state instance
+    states_by_name = {}
+
+    # The current state
+    state = None
+
+    # Event processing common to all states
+    all_states = None
+
+    @classmethod
+    def get_state(cls):
+        """
+        Return the current state machine state
+
+        Args:
+            None
+
+        Returns:
+            State: The current state machine state
+        """
+        return cls.state
+
+    @classmethod
+    def reset(cls):
+        """Initialize global state variables."""
+        cls.state = None
+        cls.states_by_name = {}
+        cls.all_states = State("*")
+
+    @classmethod
+    def event_processor(cls, initial_state_name):
+        """
+        Process events from the queue through the configured state machine,
+        starting from the specified initial state.
+
+        Args:
+            initial_state_name (str): The state from which to start processing.
+
+        Returns:
+            None
+        """
+        cls.state = cls.get_instance_by_name(initial_state_name)
+        cls.state.enter()
+
+        Debug.log("Starting event processing loop...")
+        while cls.state.get_name() != "DONE":
+            Debug.log(f"{cls.state=}")
+            Debug.log(f"{cls.all_states=}")
+            if not cls.state.has_direct_transition():
+                # Block until an event is available
+                event = event_queue.get()
+            else:
+                # Execute entry actions and default transition
+                event = None
+            Debug.log(f"Process event {event}")
+            new_state_name = cls.state.process_event(event)
+            Debug.log(f"{new_state_name=}")
+            new_state = cls.get_instance_by_name(new_state_name)
+            Debug.log(f"Enter {new_state}")
+            if new_state != cls.state:
+                cls.state = new_state
+                cls.state.enter()
+
+    @classmethod
+    def get_instance_by_name(cls, name):
+        """
+        Return the state with the specified name.
+
+        Args:
+            name (str): The states's name
+
+        Returns:
+            State: The object associated with the named state.
+        """
+        return cls.states_by_name[name]
+
     def __init__(self, name):
         """Constructor to initialize the instance field."""
         self.name = name
         self.counter = 0
         self.entry_actions = []
         self.event_transitions = {}
-        states_by_name[name] = self
+        State.states_by_name[name] = self
 
     def has_direct_transition(self):
         """Return true if the state has a direct (non-event)
@@ -49,7 +124,8 @@ class State:
         """Perform the state's entry actions."""
         self.counter += 1
         for action in self.entry_actions:
-            debug.log(f"Evaluate {action}")
+            Debug.log(f"Evaluate {action}")
+            # pylint: disable-next=eval-used
             eval(action)
 
     def has_event_transition(self, event_name):
@@ -59,8 +135,8 @@ class State:
 
     def process_event(self, event_name):
         """Transition on the specified event; return the new state name."""
-        if self != all_states:
-            if new_state_name := all_states.process_event(event_name):
+        if self != State.all_states:
+            if new_state_name := State.all_states.process_event(event_name):
                 return new_state_name
         return self.event_transitions.get(event_name)
 
@@ -107,21 +183,7 @@ class State:
         return self.event_transitions[event]
 
 
-# Event processing common to all states
-all_states = State("*")
-
-
-def get_instance(name):
-    """
-    Return the state with the specified name.
-
-    Args:
-        name (str): The states's name
-
-    Returns:
-        State: The object associated with the named state.
-    """
-    return states_by_name[name]
+State.all_states = State("*")
 
 
 # DSL API functions
@@ -175,61 +237,5 @@ def touch(file_path):
     Returns:
         None
     """
-    with open(file_path, "w") as file:
+    with open(file_path, "wb"):
         pass
-
-
-def get_state():
-    """
-    Return the current state machine state
-
-    Args:
-        None
-
-    Returns:
-        State: The current state machine state
-    """
-    return state
-
-
-def reset_globals():
-    """Initialize global state variables."""
-    global state, all_states, states_by_name
-    state = None
-    states_by_name = dict()
-    all_states.__init__("*")
-
-
-def event_processor(initial_state_name):
-    """
-    Process events from the queue through the configured state machine,
-    starting from the specified initial state.
-
-    Args:
-        initial_state_name (str): The state from which to start processing.
-
-    Returns:
-        None
-    """
-    global state
-    state = get_instance(initial_state_name)
-    state.enter()
-
-    debug.log("Starting event processing loop...")
-    while state.get_name() != "DONE":
-        debug.log(f"{state=}")
-        debug.log(f"{all_states=}")
-        if not state.has_direct_transition():
-            # Block until an event is available
-            event = event_queue.get()
-        else:
-            # Execute entry actions and default transition
-            event = None
-        debug.log(f"Process event {event}")
-        new_state_name = state.process_event(event)
-        debug.log(f"{new_state_name=}")
-        new_state = get_instance(new_state_name)
-        debug.log(f"Enter {new_state}")
-        if new_state != state:
-            state = new_state
-            state.enter()

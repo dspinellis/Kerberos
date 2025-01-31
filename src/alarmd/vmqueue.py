@@ -1,3 +1,5 @@
+"""Queue a command for processing by vmd."""
+
 import os
 import sys
 import tempfile
@@ -45,7 +47,8 @@ def vmqueue(cmd):
         now = time.localtime()
         newfname = os.path.join(
             VMQDIR,
-            f"vm.{now.tm_year:04d}.{now.tm_mon:02d}.{now.tm_mday:02d}.{now.tm_hour:02d}.{now.tm_min:02d}.{now.tm_sec:02d}",
+            f"vm.{now.tm_year:04d}.{now.tm_mon:02d}.{now.tm_mday:02d}."
+            + f"{now.tm_hour:02d}.{now.tm_min:02d}.{now.tm_sec:02d}",
         )
 
         # Rename the temporary file to the new filename
@@ -53,12 +56,14 @@ def vmqueue(cmd):
 
         return 0
 
-    except Exception as e:
-        syslog(LOG_ERR, f"Error: {e}")
+    # pylint: disable-next=broad-exception-caught
+    except Exception as exc:
+        syslog(LOG_ERR, f"Error: {exc}")
         return -1
 
 
-if __name__ == "__main__":
+def main():
+    """Body of the vmqueue command"""
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} command", file=sys.stderr)
         sys.exit(1)
@@ -71,3 +76,7 @@ if __name__ == "__main__":
         sys.exit(1)
     else:
         sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,9 +1,13 @@
+"""
+Parse alarm configuration domain-specific language.
+"""
+
 import re
 import sys
 
 from .port import SensorPort, ActuatorPort
 
-from .state import State, all_states
+from .state import State
 from .state import __dict__ as state_dict
 
 
@@ -17,6 +21,9 @@ def read_config(input_file):
     Returns:
         str: The name of the state from which to start.
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
     file_name = input_file.name if hasattr(input_file, "name") else "-"
 
     current_line_number = 0
@@ -39,12 +46,12 @@ def read_config(input_file):
             continue
 
         if re.match(r"^SENSOR", line):
-            io_type, pcb, physical, bcm, log, name = line.split()
-            port = SensorPort(name, pcb, physical, bcm, log)
+            _io_type, pcb, physical, bcm, log, name = line.split()
+            SensorPort(name, pcb, physical, bcm, log)
 
         elif re.match(r"^ACTUATOR", line):
-            io_type, pcb, physical, bcm, log, name = line.split()
-            port = ActuatorPort(name, pcb, physical, bcm, log)
+            _io_type, pcb, physical, bcm, log, name = line.split()
+            ActuatorPort(name, pcb, physical, bcm, log)
 
         # Python code blocks
         elif line[:3] == "%{":
@@ -53,9 +60,13 @@ def read_config(input_file):
         elif line[:3] == "%}":
             in_python_block = False
             try:
+                # pylint: disable-next=exec-used
                 exec(python_block_lines, state_dict)
-            except Exception as e:
-                sys.stderr.write(f"{file_name}({current_line_number}): {e}\n")
+            # pylint: disable-next=broad-except
+            except Exception as exc:
+                sys.stderr.write(
+                    f"{file_name}({current_line_number}): {exc}\n"
+                )
                 number_of_errors += 1
         elif in_python_block:
             python_block_lines += line + "\n"
@@ -67,7 +78,7 @@ def read_config(input_file):
 
         elif re.match(r"^\*:$", line):
             # "*:": Default state transitions, applicable to all
-            state = all_states
+            state = State.all_states
 
         elif match := re.match(r"^\%i (\w+)", line):
             # "%i state": Initial state specification
@@ -79,11 +90,13 @@ def read_config(input_file):
             command = match.group(2)
             command = re.sub(
                 r"ClearCounter\((\w+)\)",
-                r'get_instance("\1").clear_counter()',
+                r'State.get_instance_by_name("\1").clear_counter()',
                 command,
             )
             command = re.sub(
-                r"call\s+(\w+)", r'get_instance("\1").enter()', command
+                r"call\s+(\w+)",
+                r'State.get_instance_by_name("\1").enter()',
+                command,
             )
             if count:
                 count = count.replace("=", "==")

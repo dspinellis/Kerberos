@@ -24,11 +24,11 @@ Home security alarm CLI
 """
 
 import argparse
-import requests
 import sys
 
+import requests
 
-from .commands import commands
+from alarm.commands import commands
 
 ALARM_PORT = 5000
 
@@ -49,9 +49,8 @@ def run_command(command):
         RequestException: If the request fails.
     """
 
-    event_name = command.get_event_name()
-    url = f"http://localhost:{ALARM_PORT}/cmd/{command.get_event_name()}"
-    response = requests.get(url)
+    url = f"http://localhost:{ALARM_PORT}/cmd/{command}"
+    response = requests.get(url, timeout=5)
     response.raise_for_status()
     return response.text
 
@@ -61,8 +60,8 @@ def shell_help():
     print("Valid commands are:")
     print("x: eXit this command line interface")
 
-    for c in commands:
-        print(f"{c.get_letter()}: {c.get_help()}")
+    for cmd in commands:
+        print(f"{cmd.get_letter()}: {cmd.get_description()}")
 
 
 def shell():
@@ -83,8 +82,8 @@ def shell():
 
         try:
             run_command(command)
-        except requests.exceptions.RequestException as e:
-            print(f"Request error: {e}")
+        except requests.exceptions.RequestException as exc:
+            print(f"Request error: {exc}")
 
 
 def main():
@@ -94,29 +93,29 @@ def main():
 
     group = parser.add_mutually_exclusive_group()
 
-    for c in commands:
+    for cmd in commands:
         group.add_argument(
-            f"-{c.get_letter()}",
-            f"--{c.get_cli_name()}",
+            f"-{cmd.get_letter()}",
+            f"--{cmd.get_cli_name()}",
             action="store_true",
-            help=c.get_help(),
+            help=cmd.get_description(),
         )
 
     args = parser.parse_args()
 
     # Determine passed option
     option = None
-    for c in commands:
-        if getattr(args, c.get_option_name()):
-            option = c.get_letter()
+    for cmd in commands:
+        if getattr(args, cmd.get_option_name()):
+            option = cmd.get_letter()
             break
 
     if option:
         try:
             run_command(commands_by_letter[option])
             sys.exit(0)
-        except requests.exceptions.RequestException as e:
-            print(f"Request error: {e}", file=sys.stderr)
+        except requests.exceptions.RequestException as exc:
+            print(f"Request error: {exc}", file=sys.stderr)
             sys.exit(1)
     else:
         shell()

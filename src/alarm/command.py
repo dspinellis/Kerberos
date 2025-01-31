@@ -29,23 +29,26 @@ import re
 class Command:
     """A record encapsulating a CLI command's attributes."""
 
-    def __init__(self, letter, event_name, help):
+    def __init__(self, letter, event_name, description):
         self.letter = letter
         self.event_name = event_name
-        self.help = help
+        self.description = description
 
     def get_letter(self):
+        """Return the command's single letter mnemonic."""
         return self.letter
 
     def get_event_name(self):
+        """Return the command's name."""
         return self.event_name
 
-    def get_help(self):
-        return self.help
+    def get_description(self):
+        """Return the command's longer description."""
+        return self.description
 
     def get_cli_name(self):
         """
-        Returns the event name converted from a camel case string
+        Return the command's event name converted from a camel case string
         to kebab case, e.g. for CLI options.
 
         Returns:

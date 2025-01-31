@@ -2,11 +2,11 @@ from io import StringIO
 import pytest
 from unittest.mock import patch, call
 
-from alarmd import debug, state, port
-from alarmd.port import ActuatorPort, SensorPort
+from alarmd import debug, state
+from alarmd.port import ActuatorPort, Port, SensorPort
 from alarmd.rest import app
 from alarmd.dsl import read_config
-from alarmd.state import event_processor
+from alarmd.state import State
 
 from test_state import SETUP, SENSOR_SETUP
 
@@ -21,8 +21,8 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_globals():
     """Fixture to reset global variables before each test."""
-    state.reset_globals()
-    port.reset_globals()
+    State.reset()
+    Port.reset()
 
 
 def test_status_route(client):
@@ -48,7 +48,7 @@ second:
     assert response.status_code == 200
     assert response.json == {"CmdSecond": "OK"}
 
-    event_processor(initial_name)
+    State.event_processor(initial_name)
 
     response = client.get("/state")
     assert response.status_code == 200
@@ -94,7 +94,7 @@ other:
         assert response.status_code == 200
         assert response.json == {"CmdOther": "OK"}
 
-        event_processor(initial_name)
+        State.event_processor(initial_name)
         assert mock_set_value.call_count == 3
         mock_set_value.assert_has_calls([call(1), call(0), call(1)])
 

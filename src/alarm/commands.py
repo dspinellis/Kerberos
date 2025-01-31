@@ -1,6 +1,6 @@
-# List of supported commands
+"""List of supported commands"""
 
-from .command import Command
+from alarm.command import Command
 
 commands = [
     #       Flag, Event name,  Help

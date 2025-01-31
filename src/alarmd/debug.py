@@ -1,33 +1,41 @@
+"""
+Debug logging
+"""
+
 import sys
 
-debug_enabled = False
 
-
-def enable():
-    """Enable debugging"""
-    global debug_enabled
-    debug_enabled = True
-
-
-def enabled():
-    """Return true if debugging is enabled"""
-    return debug_enabled
-
-
-def disable():
-    """Disable debugging"""
-    global debug_enabled
-    debug_enabled = False
-
-
-def log(*args):
+class Debug:
     """
-    Logs a debug message with functionality similar to the print function.
-
-    Args:
-        *args: The objects to be logged, separated by `sep`.
+    Controllable debug logging
     """
-    if not enabled():
-        return
-    message = " ".join(map(str, args))
-    print(message, file=sys.stderr, flush=True)
+
+    logging = False
+
+    @classmethod
+    def enable(cls):
+        """Enable debug logging"""
+        cls.logging = True
+
+    @classmethod
+    def enabled(cls):
+        """Return true if debug loging is enabled"""
+        return cls.logging
+
+    @classmethod
+    def disable(cls):
+        """Disable debugging"""
+        cls.logging = False
+
+    @classmethod
+    def log(cls, *args):
+        """
+        Logs a debug message with functionality similar to the print function.
+
+        Args:
+            *args: The objects to be logged, separated by `sep`.
+        """
+        if not cls.enabled():
+            return
+        message = " ".join(map(str, args))
+        print(message, file=sys.stderr, flush=True)

@@ -15,29 +15,26 @@
 # limitations under the License.
 #
 
-"""
-Home security alarm daemon
-"""
+"""Home security alarm daemon"""
 
 import argparse
 import sys
 import syslog
-import argparse
 import os
 import threading
 
 
-from . import debug
+from alarmd.debug import Debug
 from .dsl import read_config
-from .port import Port, list_ports, set_emulated, request_lines
+from .port import ActuatorPort, Port, SensorPort
 from .rest import app
-from .state import State, event_processor
+from .state import State
 
 
 def run_rest_server():
     """Thread callback to run the REST server"""
     app.run(
-        host="127.0.0.1", port=5000, debug=debug.enabled(), use_reloader=False
+        host="127.0.0.1", port=5000, debug=Debug.enabled(), use_reloader=False
     )
 
 
@@ -74,34 +71,36 @@ def main():
 
     args = parser.parse_args()
     if args.debug:
-        debug.enable()
+        Debug.enable()
 
     if args.emulate:
-        set_emulated(True)
+        Port.set_emulated(True)
 
     # Read description file to setup I/O hardware
-    with open(args.file, "r") as input_file:
+    with open(args.file, "r", encoding="utf-8") as input_file:
         initial_state_name = read_config(input_file)
 
     if args.values:
-        sensor_display()
+        SensorPort.sensor_display()
         # Not reached
     if args.set:
-        set_value(args.set, 1)
+        ActuatorPort.set_value(args.set, 1)
         sys.exit(0)
     if args.reset:
-        set_value(args.set, 0)
+        ActuatorPort.set_value(args.set, 0)
         sys.exit(0)
     if args.list:
-        list_ports()
+        Port.list_ports()
         sys.exit(0)
 
     # Start Flask in a separate thread
     flask_thread = threading.Thread(target=run_rest_server, daemon=True)
     flask_thread.start()
 
-    with request_lines() as request:
-        event_processor(initial_state_name)
+    # Pylint can't recognize it, but dir() shows __enter__, and __exit__.
+    # pylint: disable-next=not-context-manager
+    with Port.request_lines():
+        State.event_processor(initial_state_name)
 
 
 if __name__ == "__main__":

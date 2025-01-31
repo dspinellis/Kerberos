@@ -192,7 +192,13 @@ find tests src -name '*.py' | xargs black -l 79
 Run static analysis checks with:
 ```sh
 find src -name '*.py' | xargs python -m pylint
+
+Run unit tests with:
+```sh
+pytest -s tests/
 ```
+```
+
 # See Also
 * Diomidis Spinellis. [The information furnace: Consolidated home control](http://www.dmst.aueb.gr/dds/pubs/jrnl/2003-PUC-ifurnace/html/furnace.html). Personal and Ubiquitous Computing, 7(1):53–69, 2003. [doi:10.1007/s00779-002-0213-8](http://dx.doi.org/10.1007/s00779-002-0213-8)
 * [ZoneMinder](http://www.zoneminder.com/)
