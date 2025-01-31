@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 # See https://libgpiod.readthedocs.io/en/latest/python_api.html
 import gpiod
 import os
@@ -41,9 +42,9 @@ def reset_globals():
 
 
 if "pytest" in sys.modules:
-    SENSORPATH='.'
+    SENSORPATH = "."
 else:
-    SENSORPATH="/var/spool/alarm/sensor/"
+    SENSORPATH = "/var/spool/alarm/sensor/"
 
 
 def watch_line_value(request):
@@ -64,19 +65,25 @@ def watch_line_value(request):
 
             # Auto-disabled?
             if port.get_count() > 3:
-                syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (auto-disabled)")
+                syslog.syslog(
+                    syslog.LOG_INFO, f"trigger: {port_name} (auto-disabled)"
+                )
                 continue
 
             # Not enabled?
             event_name = port.get_event_name()
             if not event_name:
                 if port.is_always_logging():
-                    syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (disabled)")
+                    syslog.syslog(
+                        syslog.LOG_INFO, f"trigger: {port_name} (disabled)"
+                    )
                 continue
 
             # Disabled by user file?
             if port.user_disabled():
-                syslog.syslog(syslog.LOG_INFO, f"trigger: {port_name} (user-disabled)")
+                syslog.syslog(
+                    syslog.LOG_INFO, f"trigger: {port_name} (user-disabled)"
+                )
                 continue
 
             debug.log(f"Queueing {event_name=} for {port_name=}")
@@ -87,6 +94,7 @@ class Port(ABC):
     """An alarm system I/O port abstract base class.
     This is used as a base class to document and specify the methods
     of the sensor and relay port subclasses."""
+
     def __init__(self, name, pcb, physical, bcm, log):
         """
         Initialize a new I/O port instance.
@@ -114,7 +122,6 @@ class Port(ABC):
         ports_by_bcm[self.bcm] = self
         debug.log(self)
 
-
     @abstractmethod
     def gpiod_line_config(self):
         """Return the port's gpiod configuration structure.
@@ -127,7 +134,6 @@ class Port(ABC):
         """
         pass
 
-
     def is_event_generating(self):
         """Return true if the port is set to generate events.
         Args:
@@ -137,8 +143,6 @@ class Port(ABC):
             bool: True if the port is is set to generate events.
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
-
-
 
     @abstractmethod
     def is_sensor(self):
@@ -151,8 +155,6 @@ class Port(ABC):
         """
         pass
 
-
-
     @abstractmethod
     def is_actuator(self):
         """Return true if the port is a relay port.
@@ -164,8 +166,6 @@ class Port(ABC):
         """
         pass
 
-
-
     def get_name(self):
         """Return the port's name
         Args:
@@ -176,8 +176,6 @@ class Port(ABC):
         """
         return self.name
 
-
-
     def get_bcm(self):
         """Return the port's BCM pin number
         Args:
@@ -187,8 +185,6 @@ class Port(ABC):
             int: The port's BCM pin number
         """
         return self.bcm
-
-
 
     def set_emulated_value(self, value):
         """Set the emulated port to the specified value.
@@ -201,7 +197,6 @@ class Port(ABC):
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
-
     def get_emulated_value(self):
         """Return the port's emulated value.
         This is the value that the port has been set to with set_value()
@@ -213,7 +208,6 @@ class Port(ABC):
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
-
     def set_value(self, value):
         """Set the port to the specified value.
         Args:
@@ -223,7 +217,6 @@ class Port(ABC):
             None
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
-
 
     def get_value(self):
         """Return the port's value.
@@ -235,7 +228,6 @@ class Port(ABC):
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
-
     def set_event_name(self, value):
         """Set the sensor port to the specified event name value.
         Args:
@@ -246,7 +238,6 @@ class Port(ABC):
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
-
     def get_event_name(self):
         """Return the sensor port's event name value.
         Args:
@@ -255,7 +246,6 @@ class Port(ABC):
             str|None: The name of the port's generated event.
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
-
 
     def clear_count(self):
         """Clear the sensor port's fire counter value
@@ -267,7 +257,6 @@ class Port(ABC):
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
 
-
     def increment_count(self):
         """Increment the sensor port's fire counter value
         Args:
@@ -277,7 +266,6 @@ class Port(ABC):
             None
         """
         raise TypeError(f"Method not supported by {self.__class__.__name__}")
-
 
     def get_count(self):
         """Return the sensor port's fire counter value
@@ -292,6 +280,7 @@ class Port(ABC):
 
 class SensorPort(Port):
     """An alarm system input port"""
+
     def __init__(self, name, pcb, physical, bcm, log):
         super().__init__(name, pcb, physical, bcm, log)
 
@@ -307,7 +296,6 @@ class SensorPort(Port):
         # Was log_when_disabled in the C version
         self.always_logging = bool(log)
 
-
     def gpiod_line_config(self):
         return {
             self.bcm: gpiod.LineSettings(
@@ -318,49 +306,42 @@ class SensorPort(Port):
             )
         }
 
-
     def is_always_logging(self):
         return self.always_logging
-
 
     def is_event_generating(self):
         return bool(self.event_name)
 
-
     def is_sensor(self):
         return True
-
 
     def is_actuator(self):
         return False
 
-
     def set_event_name(self, value):
         self.event_name = value
-
 
     def get_event_name(self):
         return self.event_name
 
-
     def clear_count(self):
         self.count = 0
-
 
     def increment_count(self):
         self.count += 1
 
-
     def get_count(self):
         return self.count
-
 
     def get_value(self):
         if is_emulated:
             return self.emulated_value
         else:
-            return 1 if request.get_value(self.bcm) == gpiod.line.Value.ACTIVE else 0
-
+            return (
+                1
+                if request.get_value(self.bcm) == gpiod.line.Value.ACTIVE
+                else 0
+            )
 
     def set_emulated_value(self, value):
         if is_emulated:
@@ -381,35 +362,39 @@ class SensorPort(Port):
 
 class ActuatorPort(Port):
     """An alarm system output port"""
+
     def __init__(self, name, pcb, physical, bcm, log):
         super().__init__(name, pcb, physical, bcm, log)
-
 
     def gpiod_line_config(self):
         return {
             self.bcm: gpiod.LineSettings(
                 direction=gpiod.line.Direction.OUTPUT,
-                output_value=gpiod.line.Value.INACTIVE
+                output_value=gpiod.line.Value.INACTIVE,
             )
         }
-
 
     def is_sensor(self):
         return False
 
-
     def is_actuator(self):
         return True
-
 
     def set_value(self, value):
         if is_emulated:
             self.emulated_value = value
         else:
-            syslog.syslog(syslog.LOG_INFO,
-                          f"set {self.name} {'on' if value else 'off'}")
-            request.set_value(self.bcm, gpiod.line.Value.ACTIVE if value else gpiod.line.Value.INACTIVE)
-
+            syslog.syslog(
+                syslog.LOG_INFO, f"set {self.name} {'on' if value else 'off'}"
+            )
+            request.set_value(
+                self.bcm,
+                (
+                    gpiod.line.Value.ACTIVE
+                    if value
+                    else gpiod.line.Value.INACTIVE
+                ),
+            )
 
     def get_emulated_value(self):
         if is_emulated:
@@ -457,7 +442,7 @@ def set_sensor_event(name, value):
     Returns:
         None
     """
-    if name == '*':
+    if name == "*":
         for p in ports:
             if p.is_sensor():
                 p.set_event_name(value)
@@ -480,7 +465,7 @@ def zero_sensors():
 def increment_sensors():
     """Increment the count and mark files for all event-generating
     and activity sensing sensors."""
-    debug.log('Incrementing sensors')
+    debug.log("Incrementing sensors")
     for port in ports:
         if not port.is_sensor():
             debug.log(f"{port} is not sensor")
@@ -503,8 +488,11 @@ def increment_sensors():
 def list_ports():
     """List available ports"""
     for port in ports:
-        print(port.get_name() + ' (' + (
-            'sensor)' if port.is_sensor() else 'actuator)'))
+        print(
+            port.get_name()
+            + " ("
+            + ("sensor)" if port.is_sensor() else "actuator)")
+        )
 
 
 def request_lines():
@@ -513,7 +501,7 @@ def request_lines():
     A thread is setup for monitoring and queuing port events.
     The returned object shall be used as a context to free to
     acquired resources.
-        
+
     Args:
         None
 
@@ -522,14 +510,12 @@ def request_lines():
     """
     global request
     # Obtain list of port configurations dicts
-    port_configs=[port.gpiod_line_config() for port in ports]
+    port_configs = [port.gpiod_line_config() for port in ports]
     # Convert it into a single dict
     config = {k: v for d in port_configs for k, v in d.items()}
-    request = gpiod.request_lines(
-        CHIP_PATH,
-        consumer="alarm",
-        config=config
+    request = gpiod.request_lines(CHIP_PATH, consumer="alarm", config=config)
+    event_thread = threading.Thread(
+        target=watch_line_value, args=[request], daemon=True
     )
-    event_thread = threading.Thread(target=watch_line_value, args=[request], daemon=True)
     event_thread.start()
     return request

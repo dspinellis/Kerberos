@@ -2,6 +2,7 @@ import sys
 
 debug_enabled = False
 
+
 def enable():
     """Enable debugging"""
     global debug_enabled
@@ -28,5 +29,5 @@ def log(*args):
     """
     if not enabled():
         return
-    message = ' '.join(map(str, args))
+    message = " ".join(map(str, args))
     print(message, file=sys.stderr, flush=True)

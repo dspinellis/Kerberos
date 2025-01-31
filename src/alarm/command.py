@@ -25,25 +25,23 @@ CLI command class
 
 import re
 
+
 class Command:
     """A record encapsulating a CLI command's attributes."""
+
     def __init__(self, letter, event_name, help):
         self.letter = letter
         self.event_name = event_name
         self.help = help
 
-
     def get_letter(self):
         return self.letter
-
 
     def get_event_name(self):
         return self.event_name
 
-
     def get_help(self):
         return self.help
-
 
     def get_cli_name(self):
         """
@@ -53,8 +51,7 @@ class Command:
         Returns:
             str: The eventName converted event-name
         """
-        return re.sub(r'(?<!^)(?=[A-Z])', '-', self.event_name).lower()
-
+        return re.sub(r"(?<!^)(?=[A-Z])", "-", self.event_name).lower()
 
     def get_option_name(self):
         """
@@ -64,4 +61,4 @@ class Command:
         Returns:
             str: The eventName converted event_name
         """
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', self.event_name).lower()
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", self.event_name).lower()

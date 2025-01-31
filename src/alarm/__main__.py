@@ -58,11 +58,12 @@ def run_command(command):
 
 def shell_help():
     """Display available commands."""
-    print('Valid commands are:')
-    print("x: eXit this command line interface");
+    print("Valid commands are:")
+    print("x: eXit this command line interface")
 
     for c in commands:
         print(f"{c.get_letter()}: {c.get_help()}")
+
 
 def shell():
     """Prompt for commands and execute them."""
@@ -71,7 +72,7 @@ def shell():
     while True:
         letter = input("Enter remote command: ")[0]
 
-        if letter == 'x':
+        if letter == "x":
             sys.exit(0)
 
         command = commands_by_letter.get(letter)
@@ -89,13 +90,17 @@ def shell():
 def main():
     """Program entry point"""
 
-    parser = argparse.ArgumentParser(description='Security alarm CLI')
+    parser = argparse.ArgumentParser(description="Security alarm CLI")
 
     group = parser.add_mutually_exclusive_group()
 
     for c in commands:
-        group.add_argument(f"-{c.get_letter()}", f"--{c.get_cli_name()}",
-                           action="store_true", help=c.get_help())
+        group.add_argument(
+            f"-{c.get_letter()}",
+            f"--{c.get_cli_name()}",
+            action="store_true",
+            help=c.get_help(),
+        )
 
     args = parser.parse_args()
 
@@ -103,8 +108,8 @@ def main():
     option = None
     for c in commands:
         if getattr(args, c.get_option_name()):
-           option = c.get_letter()
-           break
+            option = c.get_letter()
+            break
 
     if option:
         try:

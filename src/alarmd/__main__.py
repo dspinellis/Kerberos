@@ -36,38 +36,41 @@ from .state import State, event_processor
 
 def run_rest_server():
     """Thread callback to run the REST server"""
-    app.run(host='127.0.0.1', port=5000, debug=debug.enabled(),
-            use_reloader=False)
+    app.run(
+        host="127.0.0.1", port=5000, debug=debug.enabled(), use_reloader=False
+    )
+
 
 def main():
     """Program entry point"""
     syslog.openlog(ident="alarm")
-    syslog.syslog(syslog.LOG_INFO,
-                  f"starting up: pid {os.getpid()}")
+    syslog.syslog(syslog.LOG_INFO, f"starting up: pid {os.getpid()}")
 
-    parser = argparse.ArgumentParser(description='Security alarm daemon')
+    parser = argparse.ArgumentParser(description="Security alarm daemon")
 
-    parser.add_argument('-d', '--debug',
-                        help='Run in debug mode',
-                        action='store_true')
+    parser.add_argument(
+        "-d", "--debug", help="Run in debug mode", action="store_true"
+    )
 
-    parser.add_argument('-e', '--emulate',
-                        help='Emulate GPIO',
-                        action='store_true')
+    parser.add_argument(
+        "-e", "--emulate", help="Emulate GPIO", action="store_true"
+    )
 
-    parser.add_argument('file',
-                        help='Alarm specification',
-                        type=str)
+    parser.add_argument("file", help="Alarm specification", type=str)
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-l", "--list", action="store_true",
-                       help="List available ports")
-    group.add_argument("-r", "--reset", metavar="NAME",
-                       help="Reset the specified actuator")
-    group.add_argument("-s", "--set", metavar="NAME",
-                       help="Set the specified actuator")
-    group.add_argument("-v", "--values", action="store_true",
-                       help="Show sensor values")
+    group.add_argument(
+        "-l", "--list", action="store_true", help="List available ports"
+    )
+    group.add_argument(
+        "-r", "--reset", metavar="NAME", help="Reset the specified actuator"
+    )
+    group.add_argument(
+        "-s", "--set", metavar="NAME", help="Set the specified actuator"
+    )
+    group.add_argument(
+        "-v", "--values", action="store_true", help="Show sensor values"
+    )
 
     args = parser.parse_args()
     if args.debug:
@@ -99,7 +102,6 @@ def main():
 
     with request_lines() as request:
         event_processor(initial_state_name)
-
 
 
 if __name__ == "__main__":

@@ -21,7 +21,6 @@ class State:
         self.event_transitions = {}
         states_by_name[name] = self
 
-
     def has_direct_transition(self):
         """Return true if the state has a direct (non-event)
         transition associated with it."""
@@ -30,26 +29,21 @@ class State:
                 return True
         return False
 
-
     def get_name(self):
         """Return the state's name."""
         return self.name
-
 
     def clear_counter(self):
         """Zero the state entries counter."""
         self.counter = 0
 
-
     def add_entry_action(self, command):
         """Add the specified command string as an entry action."""
         self.entry_actions.append(command)
 
-
     def add_event_transition(self, event_name, state_name):
         """Transition to the specified state given an event."""
         self.event_transitions[event_name] = state_name
-
 
     def enter(self):
         """Perform the state's entry actions."""
@@ -58,12 +52,10 @@ class State:
             debug.log(f"Evaluate {action}")
             eval(action)
 
-
     def has_event_transition(self, event_name):
         """Return true if the state directly (not via all_states)
         supports a given event."""
         return bool(self.event_transitions.get(event_name))
-
 
     def process_event(self, event_name):
         """Transition on the specified event; return the new state name."""
@@ -72,28 +64,23 @@ class State:
                 return new_state_name
         return self.event_transitions.get(event_name)
 
-
     def __eq__(self, other):
         """Check equality based on the name."""
         if not isinstance(other, State):
             return NotImplemented
         return self.name == other.name
 
-
     def __hash__(self):
         """Generate a hash based on the name."""
         return hash(self.name)
-
 
     def __str__(self):
         """Pretty-print the instance."""
         return f"State {self.name=} {self.counter=} {self.event_transitions=}"
 
-
     def __repr__(self):
         """Debug representation of the instance."""
         return str(self)
-
 
     def get_entry_action(self, n):
         """
@@ -106,7 +93,6 @@ class State:
             str: The specified entry action
         """
         return self.entry_actions[n]
-
 
     def get_event_transition(self, event):
         """
@@ -121,9 +107,9 @@ class State:
         return self.event_transitions[event]
 
 
-
 # Event processing common to all states
-all_states = State('*')
+all_states = State("*")
+
 
 def get_instance(name):
     """
@@ -151,13 +137,14 @@ def register_timer_event(delay, event_name):
     Returns:
         None
     """
+
     def enqueue_event_after(delay, event_name):
         sleep(delay)
         event_queue.put(event_name)
 
-
-    thread = threading.Thread(target=enqueue_event_after,
-                              args=(delay, event_name), daemon=True)
+    thread = threading.Thread(
+        target=enqueue_event_after, args=(delay, event_name), daemon=True
+    )
     thread.start()
 
 
@@ -229,7 +216,7 @@ def event_processor(initial_state_name):
     state.enter()
 
     debug.log("Starting event processing loop...")
-    while state.get_name() != 'DONE':
+    while state.get_name() != "DONE":
         debug.log(f"{state=}")
         debug.log(f"{all_states=}")
         if not state.has_direct_transition():

@@ -64,7 +64,7 @@ def test_set_sensor_event():
 
 def test_zero_sensors():
     """Test clearing all sensor counts and removing sensor files."""
-    with patch('alarmd.port.os.remove') as mock_remove:
+    with patch("alarmd.port.os.remove") as mock_remove:
         sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
         sensor.set_event_name("AlarmTriggered")
         sensor.increment_count()
@@ -77,7 +77,7 @@ def test_zero_sensors():
 
 def test_increment_sensors_firing():
     """Test incrementing sensors that are firing."""
-    with patch('alarmd.port.open', mock_open()) as mock_file:
+    with patch("alarmd.port.open", mock_open()) as mock_file:
         sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
         sensor.set_event_name("AlarmTriggered")
         sensor.set_emulated_value(1)
@@ -89,7 +89,7 @@ def test_increment_sensors_firing():
 
 def test_increment_sensors_not_firing():
     """Test incrementing sensors that are firing."""
-    with patch('alarmd.port.open', mock_open()) as mock_file:
+    with patch("alarmd.port.open", mock_open()) as mock_file:
         sensor = port.SensorPort("TestSensor", "P1", 1, 17, True)
         sensor.set_event_name("AlarmTriggered")
         sensor.set_emulated_value(0)

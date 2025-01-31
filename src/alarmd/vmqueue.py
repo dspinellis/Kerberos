@@ -9,6 +9,7 @@ VOICEDIR = "/var/spool/voice"
 VMQDIR = VOICEDIR + "/vmq"
 SCRIPTDIR = "/usr/local/lib/voice"
 
+
 def vmqueue(cmd):
     """
     Queue ;-separated parts of cmd for execution by vmd.
@@ -24,21 +25,28 @@ def vmqueue(cmd):
     """
     try:
         # Create a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, dir=VMQDIR, prefix="tmp.", mode='w') as temp_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, dir=VMQDIR, prefix="tmp.", mode="w"
+        ) as temp_file:
             tmpfname = temp_file.name
 
             # Write commands to the temporary file
-            cmd_parts = cmd.split(';')
+            cmd_parts = cmd.split(";")
             for part in cmd_parts:
                 part = part.strip()
-                temp_file.write(f"vm shell -v -x 1 -l modem -S /usr/bin/perl {SCRIPTDIR}/{part} && exit 0\n")
+                temp_file.write(
+                    f"vm shell -v -x 1 -l modem -S /usr/bin/perl {SCRIPTDIR}/{part} && exit 0\n"
+                )
 
         # Make the temporary file executable
         os.chmod(tmpfname, 0o755)
 
         # Generate a new filename
         now = time.localtime()
-        newfname = os.path.join(VMQDIR, f"vm.{now.tm_year:04d}.{now.tm_mon:02d}.{now.tm_mday:02d}.{now.tm_hour:02d}.{now.tm_min:02d}.{now.tm_sec:02d}")
+        newfname = os.path.join(
+            VMQDIR,
+            f"vm.{now.tm_year:04d}.{now.tm_mon:02d}.{now.tm_mday:02d}.{now.tm_hour:02d}.{now.tm_min:02d}.{now.tm_sec:02d}",
+        )
 
         # Rename the temporary file to the new filename
         os.rename(tmpfname, newfname)
@@ -48,6 +56,7 @@ def vmqueue(cmd):
     except Exception as e:
         syslog(LOG_ERR, f"Error: {e}")
         return -1
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

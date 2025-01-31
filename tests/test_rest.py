@@ -10,11 +10,13 @@ from alarmd.state import event_processor
 
 from test_state import SETUP, SENSOR_SETUP
 
+
 @pytest.fixture
 def client():
     """Fixture for creating a test client."""
     with app.test_client() as client:
         yield client
+
 
 @pytest.fixture(autouse=True)
 def reset_globals():
@@ -24,7 +26,9 @@ def reset_globals():
 
 
 def test_status_route(client):
-    mock_file = StringIO(SETUP + """
+    mock_file = StringIO(
+        SETUP
+        + """
 *:
     CmdSecond > second
     ;
@@ -36,7 +40,8 @@ initial:
 second:
     > DONE
     ;
-    """)
+    """
+    )
     initial_name = read_config(mock_file)
 
     response = client.get("/cmd/Second")
@@ -51,7 +56,9 @@ second:
 
 
 def test_command_route(client):
-    mock_file = StringIO(SETUP + """
+    mock_file = StringIO(
+        SETUP
+        + """
 *:
     CmdSecond > second
     CmdOther > other
@@ -71,7 +78,8 @@ other:
     | set_bit('Siren6', 1)
     > DONE
     ;
-    """)
+    """
+    )
     with patch.object(ActuatorPort, "set_value") as mock_set_value:
         initial_name = read_config(mock_file)
 
