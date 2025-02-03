@@ -197,6 +197,10 @@ Run unit tests with:
 ```sh
 pytest -s tests/
 ```
+
+Even better configure to run the supplied Git pre-commit hook
+```sh
+git config core.hooksPath .githooks
 ```
 
 # See Also

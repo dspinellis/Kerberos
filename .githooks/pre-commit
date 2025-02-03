@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -eu
+
+
+echo Python unit and integration tests
+pytest -s tests/
+
+echo Linting
+find src -name '*.py' | xargs python -m pylint
+
+echo Code formatting
+find tests src -name '*.py' | xargs black -l 79 --check
