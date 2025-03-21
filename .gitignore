@@ -1,10 +1,4 @@
-alarm-spec.h
-cmd-def.h
-evlst.h
-*.o
-./alarmd
 vmqueue
-tags
 try-pi
 *.swp
 *.vim
