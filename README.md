@@ -7,8 +7,8 @@ It was originally designed and implemented to run under FreeBSD using
 the *pbio*(4) 8255 parallel peripheral interface basic I/O driver,
 with an interface such as the Advantech PCL-724 Digital I/O Card.
 It was later modified to run on a *Raspberry Pi* with the
-*Wiring Pi* API.
-In both cases a custom-built PCB interfaces the alarm system to
+*Wiring Pi* API, then with *pigpio*, and later ported to Python.
+In all cases a custom-built PCB interfaces the alarm system to
 passive infrared (PIR), magnetic, and other sensors as well as
 to actuators, such as sirens.
 
@@ -19,16 +19,17 @@ it is by no means a turnkey solution.
 
 ## Configuration
 To configure Kerberos pick a name for your configuration,
-say *acme*, and create three files.
+say *acme*, and create two files.
 
-* `acme-io.h` specifies the Kerberos's sensors and actuators.
-* `acme.alr` specifies the Kerberos's rules as state transitions.
+* `acme.alr` specifies the Kerberos's  sensors, actuators, and
+  rules as state transitions.
   For example, it can specify that in the *armed* state a movement
   in the bedroom will make it enter the *intruder* state and sound
   a siren.
-* `acme-cmd.h` specifies the names of Kerberos's user commands (e.g. disarm).
+* `src/alarm/commands.py` specifies the names of Kerberos's user commands
+  (e.g. disarm).
 
-One set of simple and one set of more sophisticated example files are provided,
+One set of simple example files is provided,
 but the possibilities of what you can do are limitless.
 Here are some ideas.
 
@@ -91,11 +92,38 @@ PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.**
 
-## Building and Deployment
-* Download, build, and install the [WiringPi](http://wiringpi.com/) API.
-* Build the system by running `make`.
-* Install the generated alarm daemon and command-line interface by running
-  `sudo make install`.
+## Development processes
+At the top level directory you can perform the following actions.
+
+Install developer dependencies with
+```sh
+pip install -r requirements-dev.txt
+```
+
+
+Format code with:
+```sh
+find tests src -name '*.py' | xargs black -l 79
+```
+
+Run static analysis checks with:
+```sh
+find src -name '*.py' | xargs python -m pylint
+
+Run unit tests with:
+```sh
+pytest -s tests/
+```
+
+Even better configure to run the supplied Git pre-commit hook
+```sh
+git config core.hooksPath .githooks
+```
+
+## Deployment
+* Arrange for the alarm daemon to run at system startup in an
+  appropriate Python virtual environment.
+
 * Configure logging so as to monitor Kerberos's operation.
   Here is an example configuration for *rsyslogd*(8),
   which you could place in `/etc/rsyslog.d/alarm.conf`.
@@ -155,17 +183,13 @@ if $programname == 'alarm' then ~
 * Kerberos runs as a service named *alarm* through an installed *initd* script.
   Enable the service to run at startup and start it up.
 * Create the following directories:
-      * `/var/spool/alarm/cmd/`: communication between the command-line
-        interface *alarm* and the daemon.
       * `/var/spool/alarm/disable/`: names of manually disabled sensors
       * `/var/spool/alarm/sensor/`: sensor trigger counts
       * `/var/spool/alarm/status/`: Kerberos's status
 * You send commands to the daemon through the command-line *alarm* program.
-  This creates files in the `/var/spool/alarm/cmd/` directory.
-  Configure the directory's permissions and have *cmd* run with the
-  appropriate permissions (e.g. through *sudo*(1) or by
-  having *alarm* run with setuid permissions),
-  so that this scheme will work securely.
+  This sends REST requests to the daemon program.
+  __It is assumed that the host where the two processes run is not accessible
+  to persons who are not authorized to issue such commands.__
 
 ## Operation
 In the form provided you operate Kerberos with the *alarm* command,
@@ -174,34 +198,6 @@ You monitor Kerberos's operation through the configured log files,
 e.g. with `tail -F /var/log/radar.log`.
 You will most probably want to setup a more user-friendly
 interface based on these two facilities.
-
-## Development processes
-At the top level directory you can perform the following actions.
-
-Install developer dependencies with
-```sh
-pip install -r requirements-dev.txt
-```
-
-
-Format code with:
-```sh
-find tests src -name '*.py' | xargs black -l 79
-```
-
-Run static analysis checks with:
-```sh
-find src -name '*.py' | xargs python -m pylint
-
-Run unit tests with:
-```sh
-pytest -s tests/
-```
-
-Even better configure to run the supplied Git pre-commit hook
-```sh
-git config core.hooksPath .githooks
-```
 
 # See Also
 * Diomidis Spinellis. [The information furnace: Consolidated home control](http://www.dmst.aueb.gr/dds/pubs/jrnl/2003-PUC-ifurnace/html/furnace.html). Personal and Ubiquitous Computing, 7(1):53–69, 2003. [doi:10.1007/s00779-002-0213-8](http://dx.doi.org/10.1007/s00779-002-0213-8)
